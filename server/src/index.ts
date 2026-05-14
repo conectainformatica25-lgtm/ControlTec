@@ -28,7 +28,15 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/schedules', scheduleRoutes);
 
-// Health check
+// Health check e Rota Inicial
+app.get('/', (_req, res) => {
+  res.json({ 
+    message: '🚀 ControlTec API - Sistema de Assistência Técnica Ativo',
+    endpoints: '/api/health',
+    status: 'Online'
+  });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', service: 'ControlTec API', version: '1.0.0' });
 });
