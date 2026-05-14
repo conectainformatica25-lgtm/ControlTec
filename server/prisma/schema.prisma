@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  tradeName String?
+  cnpj      String   @unique
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  customers  Customer[]
+  devices    Device[]
+  orders     ServiceOrder[]
+  estimates  Estimate[]
+  inventory  InventoryItem[]
+  finances   Transaction[]
+  schedules  Schedule[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("tecnico")
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  document  String?
+  phone     String?
+  email     String?
+  address   String?
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  devices   Device[]
+  orders    ServiceOrder[]
+  estimates Estimate[]
+  schedules Schedule[]
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  type       String
+  brand      String
+  serial     String?
+  defect     String?
+  status     String   @default("Em diagnóstico")
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders    ServiceOrder[]
+  estimates Estimate[]
+}
+
+model ServiceOrder {
+  id          String   @id @default(uuid())
+  code        String
+  description String?
+  techNotes   String?
+  technician  String?
+  status      String   @default("Aberta")
+  priority    String   @default("Normal")
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  deviceId    String?
+  device      Device?  @relation(fields: [deviceId], references: [id])
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Estimate {
+  id         String   @id @default(uuid())
+  code       String
+  status     String   @default("Pendente")
+  total      Float    @default(0)
+  items      String?
+  notes      String?
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  deviceId   String?
+  device     Device?  @relation(fields: [deviceId], references: [id])
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model InventoryItem {
+  id        String   @id @default(uuid())
+  name      String
+  category  String?
+  qty       Int      @default(0)
+  minQty    Int      @default(0)
+  costPrice Float    @default(0)
+  sellPrice Float    @default(0)
+  supplier  String?
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  desc      String
+  type      String
+  value     Float
+  category  String?
+  client    String?
+  status    String   @default("Pendente")
+  date      DateTime @default(now())
+  notes     String?
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Schedule {
+  id         String   @id @default(uuid())
+  service    String
+  address    String?
+  phone      String?
+  date       DateTime
+  time       String
+  duration   String?
+  technician String?
+  status     String   @default("Agendado")
+  priority   String   @default("Normal")
+  notes      String?
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

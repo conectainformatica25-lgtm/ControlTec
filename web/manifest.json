@@ -1,0 +1,26 @@
+{
+  "name": "ControlTec",
+  "short_name": "ControlTec",
+  "description": "Sistema de Assistência Técnica - ControlTec",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F2A5A",
+  "theme_color": "#0F2A5A",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "pt-BR"
+}

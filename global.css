@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Clássico Azul Escuro e Branco */
+    --color-bg-primary: #0a2540; /* Fundo escuro conforme imagem */
+    --color-bg-secondary: #0f172a; 
+    --color-bg-header: #ffffff; /* Topbar branca */
+    
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #cbd5e1;
+    --color-text-header: #1e293b; /* Texto na topbar branca */
+    
+    --color-accent: #f59e0b; /* Dourado */
+  }
+
+  .dark:root {
+    /* Tema Escuro Extra Legível */
+    --color-bg-primary: #020617; /* Slate 950 */
+    --color-bg-secondary: #0f172a; /* Slate 900 */
+    --color-bg-header: #1e293b; /* Slate 800 */
+    
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-header: #f8fafc;
+    
+    --color-accent: #3b82f6; /* Azul claro */
+  }
+}
