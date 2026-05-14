@@ -9,9 +9,11 @@ import {
   Package, 
   CircleDollarSign, 
   CalendarClock,
-  Settings 
+  Settings,
+  LogOut 
 } from 'lucide-react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { api } from '../../services/api';
 
 // Componente customizado para o ícone de Início (Sigla CT)
 const CTIcon = ({ size, color }: { size: number, color: string }) => (
@@ -36,6 +38,11 @@ export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const handleLogout = async () => {
+    await api.clearToken();
+    router.replace('/');
+  };
+
   return (
     <View style={styles.container}>
       {/* Barra de Ferramentas com Ícones */}
@@ -57,7 +64,7 @@ export default function TopBar() {
               >
                 <View style={styles.iconWrapper}>
                   <Icon 
-                    size={24} 
+                     size={24} 
                     color={isActive ? Theme.colors.primary : Theme.colors.textSecondary} 
                     strokeWidth={isActive ? 2.5 : 2}
                   />
@@ -68,6 +75,18 @@ export default function TopBar() {
               </TouchableOpacity>
             );
           })}
+
+          <TouchableOpacity 
+            style={styles.toolbarButton}
+            onPress={handleLogout}
+          >
+            <View style={styles.iconWrapper}>
+              <LogOut size={22} color="#DC3545" />
+            </View>
+            <Text style={[styles.toolbarButtonText, { color: '#DC3545' }]}>
+              Sair
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </View>
