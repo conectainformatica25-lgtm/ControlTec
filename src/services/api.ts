@@ -20,6 +20,7 @@ class ApiService {
   }
 
   private async request(path: string, options: RequestInit = {}) {
+    const url = `${API_URL}/api${path}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
@@ -29,17 +30,32 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_URL}/api${path}`, {
-      ...options,
-      headers,
-    });
+    console.log(`[API] Request: ${options.method || 'GET'} ${url}`, options.body ? JSON.parse(options.body as string) : '');
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      console.log(`[API] Response Status: ${response.status} for ${path}`);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error(`[API] Error Response:`, error);
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`[API] Data received for ${path}`);
+      return data;
+    } catch (error: any) {
+      console.error(`[API] Fetch Error for ${path}:`, error.message);
+      if (error.message === 'Network request failed') {
+        throw new Error('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // Auth

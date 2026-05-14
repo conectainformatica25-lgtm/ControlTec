@@ -50,23 +50,28 @@ export default function CustomersScreen() {
   }, []);
 
   const handleSave = async () => {
+    console.log('CustomersScreen: handleSave started', formData.id ? 'Edit' : 'Create');
     if (!formData.name) {
-      alert('Nome é obrigatório');
+      Alert.alert('Aviso', 'Nome é obrigatório');
       return;
     }
     setSaveLoading(true);
     try {
       if (formData.id) {
+        console.log('CustomersScreen: updating customer', formData.id);
         await api.update('customers', formData.id, formData);
       } else {
+        console.log('CustomersScreen: creating new customer');
         const { id, ...data } = formData;
         await api.create('customers', data);
       }
+      console.log('CustomersScreen: save successful');
       setModalVisible(false);
       fetchData();
       setFormData({ id: '', name: '', email: '', phone: '', address: '' });
     } catch (error: any) {
-      alert(error.message);
+      console.error('CustomersScreen Save Error:', error.message);
+      Alert.alert('Erro', error.message);
     } finally {
       setSaveLoading(false);
     }

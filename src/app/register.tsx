@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Theme } from '../ui/themes';
@@ -28,20 +29,24 @@ export default function RegisterScreen() {
   });
 
   const handleRegister = async () => {
+    console.log('RegisterScreen: handleRegister started');
     const { name, email, password, companyName, cnpj } = formData;
 
     if (!name || !email || !password || !companyName || !cnpj) {
-      alert('Por favor, preencha todos os campos');
+      Alert.alert('Aviso', 'Por favor, preencha todos os campos');
       return;
     }
 
     setLoading(true);
     try {
+      console.log('RegisterScreen: calling api.register', { email, companyName });
       const response = await api.register(formData);
+      console.log('RegisterScreen: registration successful');
       api.setToken(response.token);
       router.replace('/dashboard');
     } catch (error: any) {
-      alert(error.message || 'Erro ao realizar cadastro');
+      console.error('RegisterScreen Error:', error.message);
+      Alert.alert('Erro', error.message || 'Erro ao realizar cadastro');
     } finally {
       setLoading(false);
     }

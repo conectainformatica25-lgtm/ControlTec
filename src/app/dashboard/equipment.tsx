@@ -56,23 +56,28 @@ export default function EquipmentScreen() {
   }, []);
 
   const handleSave = async () => {
+    console.log('EquipmentScreen: handleSave started');
     if (!formData.model || !formData.customerId) {
-      alert('Modelo e Cliente são obrigatórios');
+      Alert.alert('Aviso', 'Modelo e Cliente são obrigatórios');
       return;
     }
     setSaveLoading(true);
     try {
       if (formData.id) {
+        console.log('EquipmentScreen: updating device', formData.id);
         await api.update('devices', formData.id, formData);
       } else {
+        console.log('EquipmentScreen: creating new device');
         const { id, ...data } = formData;
         await api.create('devices', data);
       }
+      console.log('EquipmentScreen: save successful');
       setModalVisible(false);
       fetchData();
       setFormData({ id: '', type: 'Smartphone', brand: '', model: '', serialNumber: '', customerId: '' });
     } catch (error: any) {
-      alert(error.message);
+      console.error('EquipmentScreen Save Error:', error.message);
+      Alert.alert('Erro', error.message);
     } finally {
       setSaveLoading(false);
     }

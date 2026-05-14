@@ -61,8 +61,9 @@ export default function OSScreen() {
   }, []);
 
   const handleSave = async () => {
+    console.log('OSScreen: handleSave started');
     if (!formData.customerId || !formData.deviceId) {
-      alert('Cliente e Aparelho são obrigatórios');
+      Alert.alert('Aviso', 'Cliente e Aparelho são obrigatórios');
       return;
     }
     setSaveLoading(true);
@@ -72,16 +73,20 @@ export default function OSScreen() {
         totalValue: parseFloat(formData.totalValue) || 0
       };
       if (formData.id) {
+        console.log('OSScreen: updating OS', formData.id);
         await api.update('orders', formData.id, payload);
       } else {
+        console.log('OSScreen: creating new OS');
         const { id, ...data } = payload;
         await api.create('orders', data);
       }
+      console.log('OSScreen: save successful');
       setModalVisible(false);
       fetchData();
       setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '' });
     } catch (error: any) {
-      alert(error.message);
+      console.error('OSScreen Save Error:', error.message);
+      Alert.alert('Erro', error.message);
     } finally {
       setSaveLoading(false);
     }
