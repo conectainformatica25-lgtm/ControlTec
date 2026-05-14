@@ -3,44 +3,61 @@ import { View, Text, TextInput, TouchableOpacity, useWindowDimensions, StyleShee
 import { useRouter } from 'expo-router';
 import { Theme } from '../ui/themes';
 import { Lock, Mail, ChevronRight } from 'lucide-react-native';
+import { api } from '../services/api';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Responsividade simples: se for maior que 768px, mostra o layout desktop
-  const isDesktop = width >= 768;
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert('Por favor, preencha todos os campos');
+      return;
+    }
 
-  const handleLogin = () => {
-    // Simular o login direcionando para o dashboard
-    router.replace('/dashboard');
+    setLoading(true);
+    try {
+      const response = await api.login(email, password);
+      api.setToken(response.token);
+      router.replace('/dashboard');
+    } catch (error: any) {
+      alert(error.message || 'Erro ao realizar login');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background Decorativo inspirado na imagem */}
       <View style={styles.bgDecorationTopRight} />
       <View style={styles.bgDecorationBottomLeft}>
         <View style={styles.bgCircleLarge} />
         <View style={styles.bgCircleSmall} />
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, isDesktop && styles.contentDesktop]}>
         
-        {/* Topo: Logo/Marca */}
-        <View style={styles.brandContainer}>
+        <View style={[styles.brandContainer, isDesktop && styles.brandContainerDesktop]}>
           <Text style={styles.logoText}>
             Control<Text style={styles.logoAccent}>Tec</Text>
           </Text>
           <Text style={styles.brandSubtitle}>
-            Soluções para sua assistência técnica
+            Soluções completas para sua assistência técnica
           </Text>
+          {isDesktop && (
+            <View style={styles.featuresList}>
+              <Text style={styles.featureItem}>✓ Gestão de Clientes e Aparelhos</Text>
+              <Text style={styles.featureItem}>✓ Ordens de Serviço em Tempo Real</Text>
+              <Text style={styles.featureItem}>✓ Controle Financeiro e Estoque</Text>
+            </View>
+          )}
         </View>
 
-        {/* Base: Formulário de Login */}
-        <View style={styles.formContainer}>
+        <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Acesse sua conta</Text>
             
@@ -78,9 +95,15 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Entrar</Text>
-              <ChevronRight color={Theme.colors.textInverse} size={20} />
+            <TouchableOpacity 
+              style={[styles.loginButton, loading && { opacity: 0.7 }]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Text>
+              {!loading && <ChevronRight color={Theme.colors.textInverse} size={20} />}
             </TouchableOpacity>
 
             <View style={styles.registerContainer}>
@@ -89,10 +112,8 @@ export default function LoginScreen() {
                 <Text style={styles.registerLink}>Cadastre sua empresa</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </View>
-
       </View>
     </SafeAreaView>
   );
@@ -280,5 +301,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.primary,
     fontWeight: 'bold',
+  },
+  featuresList: {
+    marginTop: Theme.spacing.xl,
+    gap: Theme.spacing.md,
+  },
+  featureItem: {
+    fontSize: 18,
+    color: Theme.colors.textInverse,
+    opacity: 0.9,
+    fontWeight: '500',
   },
 });

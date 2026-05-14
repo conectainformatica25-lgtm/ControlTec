@@ -1,14 +1,22 @@
+import { storage } from './storage';
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
 class ApiService {
   private token: string | null = null;
 
-  setToken(token: string) {
-    this.token = token;
+  async init() {
+    this.token = await storage.getItem('token');
   }
 
-  clearToken() {
+  async setToken(token: string) {
+    this.token = token;
+    await storage.setItem('token', token);
+  }
+
+  async clearToken() {
     this.token = null;
+    await storage.removeItem('token');
   }
 
   private async request(path: string, options: RequestInit = {}) {

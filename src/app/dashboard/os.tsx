@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,244 +6,313 @@ import {
   TextInput, 
   TouchableOpacity, 
   ScrollView, 
-  Modal,
+  Modal, 
+  ActivityIndicator,
+  useWindowDimensions,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Alert
 } from 'react-native';
 import { Theme } from '../../ui/themes';
-import { Search, Plus, X, MoreVertical, Clock, AlertTriangle, CheckCircle, Wrench } from 'lucide-react-native';
+import { Search, Plus, ClipboardList, User, MonitorSmartphone, X, Edit2, Trash2, Clock } from 'lucide-react-native';
+import { api } from '../../services/api';
 
-// Dados simulados de Ordens de Serviço
-const MOCK_ORDERS = [
-  { 
-    id: '1', os: 'OS-0001', client: 'João Silva', device: 'Dell Inspiron 15',
-    technician: 'Carlos Técnico', status: 'Em andamento', priority: 'Alta',
-    date: '12/05/2026', description: 'Troca de tela e revisão geral'
-  },
-  { 
-    id: '2', os: 'OS-0002', client: 'Empresa XPTO Ltda', device: 'HP LaserJet Pro',
-    technician: 'Ana Técnica', status: 'Aguardando peça', priority: 'Média',
-    date: '10/05/2026', description: 'Substituição do fusor e limpeza interna'
-  },
-  { 
-    id: '3', os: 'OS-0003', client: 'Maria Oliveira', device: 'Lenovo ThinkCentre',
-    technician: 'Carlos Técnico', status: 'Concluída', priority: 'Baixa',
-    date: '08/05/2026', description: 'Formatação e instalação do Windows 11'
-  },
-  { 
-    id: '4', os: 'OS-0004', client: 'Tech Solutions SA', device: 'Samsung Galaxy S24',
-    technician: 'Ana Técnica', status: 'Aberta', priority: 'Urgente',
-    date: '14/05/2026', description: 'Tela quebrada, não liga'
-  },
-  { 
-    id: '5', os: 'OS-0005', client: 'João Silva', device: 'Acer Aspire 5',
-    technician: 'Carlos Técnico', status: 'Em andamento', priority: 'Média',
-    date: '13/05/2026', description: 'Troca de bateria e limpeza térmica'
-  },
-];
-
-const getStatusStyle = (status: string) => {
-  switch (status) {
-    case 'Aberta': return { bg: '#D1ECF1', text: '#0C5460', icon: Clock };
-    case 'Em andamento': return { bg: '#FFF3CD', text: '#856404', icon: Wrench };
-    case 'Aguardando peça': return { bg: '#F8D7DA', text: '#721C24', icon: AlertTriangle };
-    case 'Concluída': return { bg: '#D4EDDA', text: '#155724', icon: CheckCircle };
-    default: return { bg: '#E2E3E5', text: '#383D41', icon: Clock };
-  }
-};
-
-const getPriorityStyle = (priority: string) => {
-  switch (priority) {
-    case 'Urgente': return { bg: '#DC3545', text: '#FFFFFF' };
-    case 'Alta': return { bg: '#FD7E14', text: '#FFFFFF' };
-    case 'Média': return { bg: Theme.colors.accent, text: '#FFFFFF' };
-    case 'Baixa': return { bg: '#6C757D', text: '#FFFFFF' };
-    default: return { bg: '#ADB5BD', text: '#FFFFFF' };
-  }
-};
-
-export default function OrdersScreen() {
+export default function OSScreen() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  
   const [search, setSearch] = useState('');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
 
-  const filtered = MOCK_ORDERS.filter(o =>
-    o.os.toLowerCase().includes(search.toLowerCase()) ||
-    o.client.toLowerCase().includes(search.toLowerCase()) ||
-    o.device.toLowerCase().includes(search.toLowerCase()) ||
-    o.technician.toLowerCase().includes(search.toLowerCase())
+  const [formData, setFormData] = useState({
+    id: '',
+    status: 'Aberto',
+    description: '',
+    defect: '',
+    observations: '',
+    totalValue: '0',
+    customerId: '',
+    deviceId: ''
+  });
+
+  const fetchData = async () => {
+    try {
+      const [ordData, custData, devData] = await Promise.all([
+        api.getAll('orders'),
+        api.getAll('customers'),
+        api.getAll('devices')
+      ]);
+      setOrders(ordData);
+      setCustomers(custData);
+      setDevices(devData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSave = async () => {
+    if (!formData.customerId || !formData.deviceId) {
+      alert('Cliente e Aparelho são obrigatórios');
+      return;
+    }
+    setSaveLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        totalValue: parseFloat(formData.totalValue) || 0
+      };
+      if (formData.id) {
+        await api.update('orders', formData.id, payload);
+      } else {
+        const { id, ...data } = payload;
+        await api.create('orders', data);
+      }
+      setModalVisible(false);
+      fetchData();
+      setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '' });
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleEdit = (item: any) => {
+    setFormData({
+      ...item,
+      totalValue: String(item.totalValue)
+    });
+    setModalVisible(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    const performDelete = async () => {
+      try {
+        await api.remove('orders', id);
+        fetchData();
+      } catch (error: any) {
+        alert(error.message);
+      }
+    };
+    if (Platform.OS === 'web') {
+      if (confirm('Deseja excluir esta OS?')) performDelete();
+    } else {
+      Alert.alert('Confirmação', 'Deseja excluir esta OS?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: performDelete }
+      ]);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Aberto': return '#4F46E5';
+      case 'Em Análise': return '#F59E0B';
+      case 'Aguardando Peça': return '#EF4444';
+      case 'Pronto': return '#10B981';
+      case 'Concluído': return '#6B7280';
+      default: return '#000';
+    }
+  };
+
+  const filtered = orders.filter(o => 
+    (o.customer?.name.toLowerCase().includes(search.toLowerCase())) ||
+    (o.device?.model.toLowerCase().includes(search.toLowerCase())) ||
+    (o.description && o.description.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
     <View style={styles.container}>
-      {/* Cabeçalho */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>Ordens de Serviço</Text>
         <TouchableOpacity 
           style={styles.addButton} 
-          onPress={() => setModalVisible(true)}
+          onPress={() => {
+            setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '' });
+            setModalVisible(true);
+          }}
         >
           <Plus color={Theme.colors.textInverse} size={20} />
           <Text style={styles.addButtonText}>Nova OS</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Card Principal */}
       <View style={styles.card}>
         <View style={styles.searchBar}>
           <Search color={Theme.colors.textSecondary} size={20} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Pesquisar por nº OS, cliente, aparelho ou técnico..."
+            placeholder="Pesquisar por cliente, aparelho ou descrição..."
             placeholderTextColor={Theme.colors.textSecondary}
             value={search}
             onChangeText={setSearch}
           />
         </View>
 
-        {/* Listagem de OS */}
-        <ScrollView style={styles.listContainer}>
-          {filtered.map((item) => {
-            const statusStyle = getStatusStyle(item.status);
-            const priorityStyle = getPriorityStyle(item.priority);
-            const StatusIcon = statusStyle.icon;
-            return (
-              <View key={item.id} style={styles.listItem}>
-                {/* Coluna Esquerda: Nº OS e Data */}
-                <View style={styles.osColumn}>
-                  <Text style={styles.osNumber}>{item.os}</Text>
-                  <Text style={styles.osDate}>{item.date}</Text>
-                </View>
-
-                {/* Coluna Central: Info */}
-                <View style={styles.infoColumn}>
-                  <Text style={styles.clientName}>{item.client}</Text>
-                  <Text style={styles.deviceName}>{item.device}</Text>
-                  <Text style={styles.description} numberOfLines={1}>
-                    {item.description}
-                  </Text>
-                </View>
-
-                {/* Técnico */}
-                <View style={styles.techColumn}>
-                  <Text style={styles.techLabel}>Técnico</Text>
-                  <Text style={styles.techName}>{item.technician}</Text>
-                </View>
-
-                {/* Badges */}
-                <View style={styles.badgesColumn}>
-                  <View style={[styles.badge, { backgroundColor: priorityStyle.bg }]}>
-                    <Text style={[styles.badgeText, { color: priorityStyle.text }]}>
-                      {item.priority}
-                    </Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                    <StatusIcon size={14} color={statusStyle.text} />
-                    <Text style={[styles.statusBadgeText, { color: statusStyle.text }]}>
-                      {item.status}
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity style={styles.actionIcon}>
-                  <MoreVertical color={Theme.colors.textSecondary} size={20} />
-                </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color={Theme.colors.primary} style={{ marginTop: 40 }} />
+        ) : (
+          <ScrollView style={styles.listContainer}>
+            {!isMobile && (
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, { width: 80 }]}>OS #</Text>
+                <Text style={[styles.tableHeaderText, { flex: 2 }]}>Cliente / Aparelho</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Status</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1 }]}>Total</Text>
+                <Text style={[styles.tableHeaderText, { width: 80, textAlign: 'center' }]}>Ações</Text>
               </View>
-            );
-          })}
-          {filtered.length === 0 && (
-            <Text style={styles.emptyText}>Nenhuma ordem de serviço encontrada.</Text>
-          )}
-        </ScrollView>
+            )}
+
+            {filtered.map((item) => (
+              isMobile ? (
+                <View key={item.id} style={styles.mobileCard}>
+                  <View style={styles.mobileCardHeader}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.osNumber}>#{item.id.slice(-4).toUpperCase()}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+                          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.itemName}>{item.customer?.name}</Text>
+                      <Text style={styles.itemSub}>{item.device?.brand} {item.device?.model}</Text>
+                    </View>
+                    <View style={styles.mobileActions}>
+                      <TouchableOpacity onPress={() => handleEdit(item)} style={styles.actionIcon}>
+                        <Edit2 size={18} color={Theme.colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.actionIcon}>
+                        <Trash2 size={18} color="#DC3545" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.mobileCardBody}>
+                    <Text style={styles.priceText}>R$ {item.totalValue.toFixed(2)}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View key={item.id} style={styles.tableRow}>
+                  <Text style={[styles.osNumber, { width: 80 }]}>#{item.id.slice(-4).toUpperCase()}</Text>
+                  <View style={{ flex: 2 }}>
+                    <Text style={styles.itemName}>{item.customer?.name}</Text>
+                    <Text style={styles.itemSub}>{item.device?.brand} {item.device?.model}</Text>
+                  </View>
+                  <View style={{ flex: 1.5 }}>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20', alignSelf: 'flex-start' }]}>
+                      <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.priceText, { flex: 1 }]}>R$ {item.totalValue.toFixed(2)}</Text>
+                  <View style={{ width: 80, flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
+                    <TouchableOpacity onPress={() => handleEdit(item)}>
+                      <Edit2 size={18} color={Theme.colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                      <Trash2 size={18} color="#DC3545" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )
+            ))}
+            
+            {filtered.length === 0 && (
+              <Text style={styles.emptyText}>Nenhuma OS encontrada.</Text>
+            )}
+          </ScrollView>
+        )}
       </View>
 
-      {/* Modal Nova OS */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <KeyboardAvoidingView 
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+      {/* Modal OS */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Abrir Nova Ordem de Serviço</Text>
+              <Text style={styles.modalTitle}>{formData.id ? 'Editar OS' : 'Nova Ordem de Serviço'}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <X color={Theme.colors.textSecondary} size={24} />
               </TouchableOpacity>
             </View>
-
             <ScrollView style={styles.modalForm}>
               <View style={styles.inputRow}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
+                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                   <Text style={styles.label}>Cliente</Text>
-                  <TextInput style={styles.input} placeholder="Selecione o cliente" />
+                  <View style={styles.selectWrapper}>
+                    <select 
+                      style={styles.htmlSelect}
+                      value={formData.customerId}
+                      onChange={(e) => setFormData({...formData, customerId: e.target.value})}
+                    >
+                      <option value="">Selecione</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </View>
                 </View>
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
                   <Text style={styles.label}>Aparelho</Text>
-                  <TextInput style={styles.input} placeholder="Selecione o aparelho" />
-                </View>
-              </View>
-
-              <View style={styles.inputRow}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
-                  <Text style={styles.label}>Técnico Responsável</Text>
-                  <TextInput style={styles.input} placeholder="Selecione o técnico" />
-                </View>
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
-                  <Text style={styles.label}>Prioridade</Text>
-                  <View style={styles.priorityRow}>
-                    {['Baixa', 'Média', 'Alta', 'Urgente'].map(p => (
-                      <TouchableOpacity key={p} style={[
-                        styles.priorityChip, 
-                        { borderColor: getPriorityStyle(p).bg }
-                      ]}>
-                        <Text style={[styles.priorityChipText, { color: getPriorityStyle(p).bg }]}>
-                          {p}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View style={styles.selectWrapper}>
+                    <select 
+                      style={styles.htmlSelect}
+                      value={formData.deviceId}
+                      onChange={(e) => setFormData({...formData, deviceId: e.target.value})}
+                    >
+                      <option value="">Selecione</option>
+                      {devices.filter(d => d.customerId === formData.customerId).map(d => (
+                        <option key={d.id} value={d.id}>{d.brand} {d.model}</option>
+                      ))}
+                    </select>
                   </View>
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Defeito Relatado pelo Cliente</Text>
-                <TextInput 
-                  style={[styles.input, styles.textArea]} 
-                  placeholder="Descreva o problema relatado..."
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
+                <Text style={styles.label}>Status</Text>
+                <View style={styles.selectWrapper}>
+                  <select 
+                    style={styles.htmlSelect}
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  >
+                    <option value="Aberto">Aberto</option>
+                    <option value="Em Análise">Em Análise</option>
+                    <option value="Aguardando Peça">Aguardando Peça</option>
+                    <option value="Pronto">Pronto</option>
+                    <option value="Concluído">Concluído</option>
+                  </select>
+                </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Observações do Técnico</Text>
-                <TextInput 
-                  style={[styles.input, styles.textArea]} 
-                  placeholder="Observações internas (opcional)..."
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
+                <Text style={styles.label}>Defeito Relatado</Text>
+                <TextInput style={[styles.input, styles.textArea]} multiline value={formData.defect} onChangeText={v => setFormData({...formData, defect: v})} />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Descrição do Serviço</Text>
+                <TextInput style={[styles.input, styles.textArea]} multiline value={formData.description} onChangeText={v => setFormData({...formData, description: v})} />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Valor Total (R$)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" value={formData.totalValue} onChangeText={v => setFormData({...formData, totalValue: v})} />
               </View>
             </ScrollView>
-
             <View style={styles.modalFooter}>
-              <TouchableOpacity 
-                style={styles.cancelButton} 
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.saveButton} 
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.saveButtonText}>Abrir OS</Text>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saveLoading}>
+                {saveLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveButtonText}>Salvar OS</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -254,253 +323,45 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: Theme.spacing.lg,
-    backgroundColor: Theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Theme.spacing.lg,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Theme.colors.textInverse,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.accent,
-    paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.sm,
-  },
-  addButtonText: {
-    color: Theme.colors.textInverse,
-    fontWeight: 'bold',
-    marginLeft: Theme.spacing.xs,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.md,
-    padding: Theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.inputBackground,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    borderRadius: Theme.borderRadius.sm,
-    paddingHorizontal: Theme.spacing.md,
-    marginBottom: Theme.spacing.lg,
-    height: 48,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: Theme.spacing.sm,
-    fontSize: 16,
-    color: Theme.colors.textPrimary,
-    ...Platform.select({ web: { outlineStyle: 'none' } })
-  },
+  container: { flex: 1, padding: Theme.spacing.lg, backgroundColor: Theme.colors.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg },
+  pageTitle: { fontSize: 24, fontWeight: 'bold', color: Theme.colors.textInverse },
+  addButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.accent, paddingHorizontal: Theme.spacing.md, paddingVertical: Theme.spacing.sm, borderRadius: Theme.borderRadius.sm },
+  addButtonText: { color: Theme.colors.textInverse, fontWeight: 'bold', marginLeft: Theme.spacing.xs },
+  card: { flex: 1, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm, paddingHorizontal: Theme.spacing.md, marginBottom: Theme.spacing.lg, height: 44 },
+  searchInput: { flex: 1, marginLeft: Theme.spacing.sm, fontSize: 15, color: Theme.colors.textPrimary, ...Platform.select({ web: { outlineStyle: 'none' } }) },
   listContainer: { flex: 1 },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.inputBackground,
-  },
-  osColumn: {
-    width: 80,
-    marginRight: Theme.spacing.md,
-  },
-  osNumber: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: Theme.colors.primary,
-  },
-  osDate: {
-    fontSize: 12,
-    color: Theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  infoColumn: {
-    flex: 1,
-    marginRight: Theme.spacing.md,
-  },
-  clientName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: Theme.colors.textPrimary,
-  },
-  deviceName: {
-    fontSize: 13,
-    color: Theme.colors.textSecondary,
-    marginTop: 1,
-  },
-  description: {
-    fontSize: 12,
-    color: Theme.colors.textSecondary,
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  techColumn: {
-    width: 120,
-    marginRight: Theme.spacing.md,
-  },
-  techLabel: {
-    fontSize: 11,
-    color: Theme.colors.textSecondary,
-  },
-  techName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Theme.colors.textPrimary,
-    marginTop: 1,
-  },
-  badgesColumn: {
-    alignItems: 'flex-end',
-    marginRight: Theme.spacing.sm,
-    gap: 6,
-  },
-  badge: {
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 12,
-    gap: 4,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
+  tableHeader: { flexDirection: 'row', paddingBottom: Theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: Theme.colors.border, marginBottom: Theme.spacing.sm },
+  tableHeaderText: { fontSize: 12, fontWeight: 'bold', color: Theme.colors.textSecondary, textTransform: 'uppercase' },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.inputBackground },
+  osNumber: { fontSize: 14, fontWeight: '900', color: Theme.colors.primary, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
+  itemName: { fontSize: 15, fontWeight: 'bold', color: Theme.colors.textPrimary },
+  itemSub: { fontSize: 13, color: Theme.colors.textSecondary },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  statusText: { fontSize: 11, fontWeight: 'bold' },
+  priceText: { fontSize: 15, fontWeight: 'bold', color: Theme.colors.textPrimary },
+  emptyText: { textAlign: 'center', marginTop: Theme.spacing.xl, color: Theme.colors.textSecondary, fontSize: 16 },
+  mobileCard: { backgroundColor: Theme.colors.inputBackground, borderRadius: Theme.borderRadius.sm, padding: Theme.spacing.md, marginBottom: Theme.spacing.md, borderWidth: 1, borderColor: Theme.colors.border },
+  mobileCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Theme.spacing.sm },
+  mobileActions: { flexDirection: 'row', gap: 15 },
   actionIcon: { padding: 4 },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: Theme.spacing.xl,
-    color: Theme.colors.textSecondary,
-    fontSize: 16,
-  },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Theme.spacing.lg,
-  },
-  modalContent: {
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.md,
-    width: '100%',
-    maxWidth: 700,
-    maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Theme.colors.textPrimary,
-  },
+  mobileCardBody: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: Theme.spacing.lg },
+  modalContent: { backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, width: '100%', maxWidth: 600, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: Theme.colors.border },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: Theme.colors.textPrimary },
   modalForm: { padding: Theme.spacing.lg },
   inputGroup: { marginBottom: Theme.spacing.md },
   inputRow: { flexDirection: 'row' },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Theme.colors.textPrimary,
-    marginBottom: Theme.spacing.xs,
-  },
-  input: {
-    height: 48,
-    backgroundColor: Theme.colors.inputBackground,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    borderRadius: Theme.borderRadius.sm,
-    paddingHorizontal: Theme.spacing.md,
-    fontSize: 16,
-    color: Theme.colors.textPrimary,
-    ...Platform.select({ web: { outlineStyle: 'none' } })
-  },
-  textArea: {
-    height: 80,
-    paddingTop: Theme.spacing.sm,
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: Theme.spacing.xs,
-    flexWrap: 'wrap',
-  },
-  priorityChip: {
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 2,
-    backgroundColor: Theme.colors.inputBackground,
-  },
-  priorityChipText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: Theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border,
-  },
-  cancelButton: {
-    paddingHorizontal: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.sm,
-    marginRight: Theme.spacing.sm,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Theme.colors.textSecondary,
-  },
-  saveButton: {
-    backgroundColor: Theme.colors.primary,
-    paddingHorizontal: Theme.spacing.xl,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.sm,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Theme.colors.textInverse,
-  }
+  label: { fontSize: 14, fontWeight: '600', color: Theme.colors.textPrimary, marginBottom: Theme.spacing.xs },
+  input: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm, paddingHorizontal: Theme.spacing.md, fontSize: 16, color: Theme.colors.textPrimary, ...Platform.select({ web: { outlineStyle: 'none' } }) },
+  textArea: { height: 80, paddingTop: 10 },
+  selectWrapper: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm },
+  htmlSelect: { width: '100%', height: '100%', border: 'none', background: 'transparent', padding: '0 10px', fontSize: 16, outline: 'none' },
+  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', padding: Theme.spacing.lg, borderTopWidth: 1, borderTopColor: Theme.colors.border, gap: Theme.spacing.md },
+  cancelButton: { paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.lg },
+  cancelButtonText: { fontSize: 16, color: Theme.colors.textSecondary, fontWeight: '600' },
+  saveButton: { backgroundColor: Theme.colors.primary, paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.xl, borderRadius: Theme.borderRadius.sm, minWidth: 100, alignItems: 'center' },
+  saveButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' }
 });

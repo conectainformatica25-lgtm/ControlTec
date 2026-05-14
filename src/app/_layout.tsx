@@ -3,7 +3,14 @@ import { Theme } from '../ui/themes';
 import { View } from 'react-native';
 import '../../global.css';
 
+import React, { useEffect } from 'react';
+import { api } from '../services/api';
+
 export default function RootLayout() {
+  useEffect(() => {
+    api.init();
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: Theme.colors.background }}>
       <Stack

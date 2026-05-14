@@ -102,20 +102,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Theme.spacing.sm,
     paddingVertical: Theme.spacing.xs,
-    minWidth: 70,
+    minWidth: 65,
     borderRadius: Theme.borderRadius.sm,
   },
   toolbarButtonActive: {
-    backgroundColor: Theme.colors.inputBackground, // Leve destaque de fundo
+    backgroundColor: Theme.colors.inputBackground,
   },
   iconWrapper: {
-    height: 24,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   toolbarButtonText: {
-    fontSize: 11,
-    marginTop: 4,
+    fontSize: 10,
+    marginTop: 2,
     color: Theme.colors.textSecondary,
     fontWeight: '600',
   },
