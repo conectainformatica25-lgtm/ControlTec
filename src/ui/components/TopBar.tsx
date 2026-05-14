@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '../themes';
 import { 
   Users, 
@@ -37,6 +38,7 @@ const MENU_ITEMS = [
 export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
     await api.clearToken();
@@ -44,7 +46,7 @@ export default function TopBar() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Barra de Ferramentas com Ícones */}
       <View style={styles.toolbarRow}>
         <ScrollView 

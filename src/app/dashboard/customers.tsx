@@ -8,7 +8,6 @@ import {
   ScrollView, 
   Modal, 
   ActivityIndicator,
-  useWindowDimensions,
   Platform,
   KeyboardAvoidingView,
   Alert
@@ -16,10 +15,10 @@ import {
 import { Theme } from '../../ui/themes';
 import { Search, Plus, User, Phone, MapPin, X, Edit2, Trash2 } from 'lucide-react-native';
 import { api } from '../../services/api';
+import { useBreakpoints } from '../../ui/useBreakpoints';
 
 export default function CustomersScreen() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
+  const { isCompact, useTableLayout } = useBreakpoints();
   
   const [search, setSearch] = useState('');
   const [customers, setCustomers] = useState<any[]>([]);
@@ -108,10 +107,10 @@ export default function CustomersScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Clientes</Text>
+      <View style={[styles.header, isCompact ? styles.headerCompact : undefined]}>
+        <Text style={[styles.pageTitle, isCompact ? styles.pageTitleBlock : undefined]}>Clientes</Text>
         <TouchableOpacity 
-          style={styles.addButton} 
+          style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} 
           onPress={() => {
             setFormData({ id: '', name: '', email: '', phone: '', address: '' });
             setModalVisible(true);
@@ -138,7 +137,7 @@ export default function CustomersScreen() {
           <ActivityIndicator size="large" color={Theme.colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <ScrollView style={styles.listContainer}>
-            {!isMobile && (
+            {!useTableLayout && (
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 2 }]}>Nome / E-mail</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1 }]}>Telefone</Text>
@@ -148,7 +147,7 @@ export default function CustomersScreen() {
             )}
 
             {filtered.map((item) => (
-              isMobile ? (
+              !useTableLayout ? (
                 <View key={item.id} style={styles.mobileCard}>
                   <View style={styles.mobileCardHeader}>
                     <View style={{ flex: 1 }}>
@@ -267,17 +266,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Theme.spacing.lg,
     backgroundColor: Theme.colors.background,
+    minWidth: 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
+    gap: Theme.spacing.md,
+  },
+  headerCompact: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
   pageTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Theme.colors.textInverse,
+  },
+  pageTitleBlock: {
+    flexShrink: 1,
   },
   addButton: {
     flexDirection: 'row',
@@ -287,6 +295,10 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.sm,
   },
+  addButtonBlock: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
   addButtonText: {
     color: Theme.colors.textInverse,
     fontWeight: 'bold',
@@ -294,6 +306,8 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
+    minHeight: 0,
+    minWidth: 0,
     backgroundColor: Theme.colors.surface,
     borderRadius: Theme.borderRadius.md,
     padding: Theme.spacing.lg,
@@ -343,6 +357,7 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Theme.colors.inputBackground,
+    minWidth: 0,
   },
   customerName: {
     fontSize: 15,

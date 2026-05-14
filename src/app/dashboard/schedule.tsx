@@ -8,7 +8,6 @@ import {
   ScrollView, 
   Modal, 
   ActivityIndicator,
-  useWindowDimensions,
   Platform,
   KeyboardAvoidingView,
   Alert
@@ -16,6 +15,7 @@ import {
 import { Theme } from '../../ui/themes';
 import { ChevronLeft, ChevronRight, Search, Plus, CalendarDays, User, MapPin, Phone, Clock, X, Edit2 } from 'lucide-react-native';
 import { api } from '../../services/api';
+import { useBreakpoints } from '../../ui/useBreakpoints';
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -30,8 +30,7 @@ const generateCalendarDays = (year: number, month: number) => {
 };
 
 export default function ScheduleScreen() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 900;
+  const { isCompact, useScheduleTwoColumn } = useBreakpoints();
   
   const [search, setSearch] = useState('');
   const [schedules, setSchedules] = useState<any[]>([]);
@@ -97,9 +96,9 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Agendamentos</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => {
+      <View style={[styles.header, isCompact ? styles.headerCompact : undefined]}>
+        <Text style={[styles.pageTitle, isCompact ? styles.pageTitleBlock : undefined]}>Agendamentos</Text>
+        <TouchableOpacity style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} onPress={() => {
           setFormData({ id: '', clientName: '', clientPhone: '', address: '', service: '', technician: '', date: selectedDateStr, time: '', duration: '', status: 'Confirmado', priority: 'Normal' });
           setModalVisible(true);
         }}>
@@ -108,9 +107,9 @@ export default function ScheduleScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.mainRow, isMobile && styles.mainRowMobile]}>
+      <View style={[styles.mainRow, !useScheduleTwoColumn ? styles.mainRowMobile : undefined]}>
         {/* Calendário */}
-        <View style={[styles.calendarCard, isMobile && styles.calendarCardMobile]}>
+        <View style={[styles.calendarCard, !useScheduleTwoColumn ? styles.calendarCardStacked : styles.calendarCardInline]}>
           <View style={styles.calendarHeader}>
             <TouchableOpacity onPress={() => currentMonth === 0 ? (setCurrentMonth(11), setCurrentYear(currentYear - 1)) : setCurrentMonth(currentMonth - 1)}>
               <ChevronLeft size={22} color={Theme.colors.primary} />
@@ -175,15 +174,19 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: Theme.spacing.lg, backgroundColor: Theme.colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg },
+  container: { flex: 1, padding: Theme.spacing.lg, backgroundColor: Theme.colors.background, minWidth: 0 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg, gap: Theme.spacing.md },
+  headerCompact: { flexDirection: 'column', alignItems: 'stretch' },
   pageTitle: { fontSize: 24, fontWeight: 'bold', color: Theme.colors.textInverse },
+  pageTitleBlock: { flexShrink: 1 },
   addButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.accent, paddingHorizontal: Theme.spacing.md, paddingVertical: Theme.spacing.sm, borderRadius: Theme.borderRadius.sm },
+  addButtonBlock: { alignSelf: 'stretch', justifyContent: 'center' },
   addButtonText: { color: Theme.colors.textInverse, fontWeight: 'bold', marginLeft: Theme.spacing.xs },
-  mainRow: { flexDirection: 'row', gap: Theme.spacing.lg, flex: 1 },
+  mainRow: { flexDirection: 'row', gap: Theme.spacing.lg, flex: 1, minHeight: 0, minWidth: 0 },
   mainRowMobile: { flexDirection: 'column' },
-  calendarCard: { width: 350, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg },
-  calendarCardMobile: { width: '100%' },
+  calendarCard: { backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg },
+  calendarCardStacked: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+  calendarCardInline: { width: 360, maxWidth: '100%', flexShrink: 0, alignSelf: 'flex-start' },
   calendarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg },
   calendarMonth: { fontSize: 18, fontWeight: 'bold', color: Theme.colors.primary },
   weekRow: { flexDirection: 'row', marginBottom: Theme.spacing.sm },
@@ -193,11 +196,12 @@ const styles = StyleSheet.create({
   dayCellSelected: { backgroundColor: Theme.colors.primary, borderRadius: 22 },
   dayText: { fontSize: 14, color: Theme.colors.textPrimary },
   dayTextSelected: { color: '#FFF', fontWeight: 'bold' },
-  listCard: { flex: 1, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg },
+  listCard: { flex: 1, minHeight: 0, minWidth: 0, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBackground, paddingHorizontal: Theme.spacing.md, marginBottom: Theme.spacing.lg, height: 44, borderRadius: 8 },
   searchInput: { flex: 1, marginLeft: 8 },
   listContainer: { flex: 1 },
   scheduleItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.border },
+  scheduleInfo: { flex: 1, minWidth: 0, marginRight: Theme.spacing.sm },
   scheduleService: { fontSize: 16, fontWeight: 'bold', color: Theme.colors.textPrimary },
   scheduleMeta: { fontSize: 13, color: Theme.colors.textSecondary, marginTop: 2 },
   emptyText: { textAlign: 'center', marginTop: 20, color: Theme.colors.textSecondary },

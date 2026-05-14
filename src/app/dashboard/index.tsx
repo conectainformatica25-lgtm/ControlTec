@@ -5,7 +5,6 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  useWindowDimensions,
   ActivityIndicator
 } from 'react-native';
 import { Theme } from '../../ui/themes';
@@ -18,10 +17,10 @@ import {
   ArrowRight
 } from 'lucide-react-native';
 import { api } from '../../services/api';
+import { useBreakpoints } from '../../ui/useBreakpoints';
 
 export default function Home() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
+  const { width, isCompact } = useBreakpoints();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     customers: 0,
@@ -75,7 +74,15 @@ export default function Home() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.scrollContent,
+        {
+          paddingHorizontal: Math.max(Theme.spacing.md, Math.min(Theme.spacing.xl * 2, width * 0.05)),
+        },
+      ]}
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.welcomeText}>Olá, Bem-vindo!</Text>
@@ -84,9 +91,9 @@ export default function Home() {
       </View>
 
       {/* KPI Cards Grid */}
-      <View style={[styles.kpiGrid, isMobile && styles.kpiGridMobile]}>
+      <View style={[styles.kpiGrid, isCompact ? styles.kpiGridMobile : undefined]}>
         {kpis.map((kpi, index) => (
-          <View key={index} style={[styles.kpiCard, isMobile && styles.kpiCardMobile]}>
+          <View key={index} style={[styles.kpiCard, isCompact ? styles.kpiCardMobile : undefined]}>
             <View style={[styles.iconContainer, { backgroundColor: kpi.color + '20' }]}>
               <kpi.icon size={24} color={kpi.color} />
             </View>
@@ -99,9 +106,9 @@ export default function Home() {
         ))}
       </View>
 
-      <View style={[styles.mainRow, isMobile && styles.mainRowMobile]}>
+      <View style={[styles.mainRow, isCompact ? styles.mainRowMobile : undefined]}>
         {/* Recent Activity */}
-        <View style={[styles.section, styles.activitySection, isMobile && styles.sectionMobile]}>
+        <View style={[styles.section, styles.activitySection, isCompact ? styles.sectionMobile : undefined]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Atividades Recentes</Text>
             <TouchableOpacity style={styles.seeAll}>
@@ -126,7 +133,7 @@ export default function Home() {
         </View>
 
         {/* Quick Actions */}
-        <View style={[styles.section, styles.actionsSection, isMobile && styles.sectionMobile]}>
+        <View style={[styles.section, styles.actionsSection, isCompact ? styles.sectionMobile : undefined]}>
           <Text style={styles.sectionTitle}>Ações Rápidas</Text>
           <View style={styles.actionsGrid}>
             <TouchableOpacity style={styles.actionButton}>
@@ -151,7 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.background,
   },
   scrollContent: {
-    padding: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.lg,
   },
   loadingContainer: {
     flex: 1,
@@ -245,7 +252,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   sectionMobile: {
-    minWidth: '100%',
+    width: '100%',
+    minWidth: 0,
   },
   activitySection: {
     flex: 2,

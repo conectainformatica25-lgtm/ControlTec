@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import '../../global.css';
 
 import React, { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { api } from '../services/api';
 
 export default function RootLayout() {
@@ -12,6 +13,7 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <SafeAreaProvider>
     <View style={{ flex: 1, backgroundColor: Theme.colors.background }}>
       <Stack
         screenOptions={{
@@ -22,9 +24,10 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ title: 'Cadastro de Empresa', headerBackTitle: 'Voltar' }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
         <Stack.Screen name="dashboard" options={{ headerShown: false }} />
       </Stack>
     </View>
+    </SafeAreaProvider>
   );
 }

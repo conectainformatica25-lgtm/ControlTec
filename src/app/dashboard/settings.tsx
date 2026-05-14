@@ -6,10 +6,10 @@ import {
   TextInput, 
   TouchableOpacity, 
   ScrollView, 
-  Switch,
-  Platform
+  Switch
 } from 'react-native';
 import { Theme } from '../../ui/themes';
+import { useBreakpoints } from '../../ui/useBreakpoints';
 import { 
   Building2, User, Bell, Shield, Palette, Printer, 
   Save, ChevronRight, LogOut, Mail, Phone, MapPin
@@ -28,6 +28,7 @@ const MENU_ITEMS: { id: SectionId; title: string; desc: string; icon: any }[] = 
 
 export default function SettingsScreen() {
   const [activeSection, setActiveSection] = useState<SectionId>('empresa');
+  const { isCompact } = useBreakpoints();
 
   // Estados dos toggles
   const [notifOS, setNotifOS] = useState(true);
@@ -58,22 +59,22 @@ export default function SettingsScreen() {
               <Text style={styles.label}>Nome Fantasia</Text>
               <TextInput style={styles.input} defaultValue="ControlTec" />
             </View>
-            <View style={styles.formRow}>
-              <View style={[styles.formGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
+            <View style={[styles.formRow, isCompact ? styles.formRowColumn : undefined]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>CNPJ</Text>
                 <TextInput style={styles.input} defaultValue="12.345.678/0001-90" />
               </View>
-              <View style={[styles.formGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Inscrição Estadual</Text>
                 <TextInput style={styles.input} placeholder="Opcional" />
               </View>
             </View>
-            <View style={styles.formRow}>
-              <View style={[styles.formGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
+            <View style={[styles.formRow, isCompact ? styles.formRowColumn : undefined]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Telefone</Text>
                 <TextInput style={styles.input} defaultValue="(11) 3333-4444" />
               </View>
-              <View style={[styles.formGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>E-mail</Text>
                 <TextInput style={styles.input} defaultValue="contato@controltec.com.br" />
               </View>
@@ -107,12 +108,12 @@ export default function SettingsScreen() {
               <Text style={styles.label}>Nome Completo</Text>
               <TextInput style={styles.input} defaultValue="Administrador do Sistema" />
             </View>
-            <View style={styles.formRow}>
-              <View style={[styles.formGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
+            <View style={[styles.formRow, isCompact ? styles.formRowColumn : undefined]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>E-mail</Text>
                 <TextInput style={styles.input} defaultValue="admin@controltec.com.br" />
               </View>
-              <View style={[styles.formGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Telefone</Text>
                 <TextInput style={styles.input} defaultValue="(11) 98765-4321" />
               </View>
@@ -145,12 +146,12 @@ export default function SettingsScreen() {
               <Text style={styles.label}>Senha Atual</Text>
               <TextInput style={styles.input} placeholder="••••••••" secureTextEntry />
             </View>
-            <View style={styles.formRow}>
-              <View style={[styles.formGroup, { flex: 1, marginRight: Theme.spacing.sm }]}>
+            <View style={[styles.formRow, isCompact ? styles.formRowColumn : undefined]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Nova Senha</Text>
                 <TextInput style={styles.input} placeholder="Mínimo 8 caracteres" secureTextEntry />
               </View>
-              <View style={[styles.formGroup, { flex: 1, marginLeft: Theme.spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
                 <Text style={styles.label}>Confirmar Nova Senha</Text>
                 <TextInput style={styles.input} placeholder="Repita a nova senha" secureTextEntry />
               </View>
@@ -230,9 +231,13 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.pageTitle}>Configurações</Text>
 
-      <View style={styles.mainCard}>
+      <View style={[styles.mainCard, isCompact ? styles.mainCardCompact : undefined]}>
         {/* Menu Lateral */}
-        <View style={styles.sidebar}>
+        <ScrollView
+          style={[styles.sidebar, isCompact ? styles.sidebarCompact : undefined]}
+          contentContainerStyle={isCompact ? styles.sidebarContentCompact : styles.sidebarContent}
+          showsVerticalScrollIndicator={false}
+        >
           {MENU_ITEMS.map(item => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -259,10 +264,10 @@ export default function SettingsScreen() {
             <LogOut size={20} color="#DC3545" />
             <Text style={styles.logoutText}>Sair do Sistema</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {/* Conteúdo */}
-        <ScrollView style={styles.content}>
+        <ScrollView style={[styles.content, isCompact ? styles.contentCompact : undefined]} showsVerticalScrollIndicator={false}>
           {renderContent()}
         </ScrollView>
       </View>
@@ -307,6 +312,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Theme.spacing.lg,
     backgroundColor: Theme.colors.background,
+    minWidth: 0,
   },
   pageTitle: {
     fontSize: 24,
@@ -317,6 +323,8 @@ const styles = StyleSheet.create({
   mainCard: {
     flex: 1,
     flexDirection: 'row',
+    minHeight: 0,
+    minWidth: 0,
     backgroundColor: Theme.colors.surface,
     borderRadius: Theme.borderRadius.md,
     shadowColor: '#000',
@@ -326,14 +334,31 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: 'hidden',
   },
+  mainCardCompact: {
+    flexDirection: 'column',
+  },
 
   // Sidebar
   sidebar: {
     width: 280,
     borderRightWidth: 1,
     borderRightColor: Theme.colors.border,
+  },
+  sidebarCompact: {
+    width: '100%',
+    maxHeight: 320,
+    flexGrow: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+  },
+  sidebarContent: {
     padding: Theme.spacing.md,
-    justifyContent: 'flex-start',
+    flexGrow: 1,
+  },
+  sidebarContentCompact: {
+    padding: Theme.spacing.md,
+    paddingBottom: Theme.spacing.lg,
   },
   menuItem: {
     flexDirection: 'row',
@@ -364,7 +389,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Theme.spacing.md,
-    marginTop: 'auto',
+    marginTop: Theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: Theme.colors.border,
     gap: Theme.spacing.sm,
@@ -378,7 +403,11 @@ const styles = StyleSheet.create({
   // Conteúdo
   content: {
     flex: 1,
+    minWidth: 0,
     padding: Theme.spacing.xl,
+  },
+  contentCompact: {
+    flexGrow: 1,
   },
   sectionTitle: {
     fontSize: 22,
@@ -428,7 +457,8 @@ const styles = StyleSheet.create({
 
   // Forms
   formGroup: { marginBottom: Theme.spacing.md },
-  formRow: { flexDirection: 'row' },
+  formRow: { flexDirection: 'row', gap: Theme.spacing.sm },
+  formRowColumn: { flexDirection: 'column' },
   label: {
     fontSize: 14,
     fontWeight: '600',
@@ -444,7 +474,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Theme.spacing.md,
     fontSize: 16,
     color: Theme.colors.textPrimary,
-    ...Platform.select({ web: { outlineStyle: 'none' } })
   },
   textArea: {
     height: 80,
@@ -470,6 +499,7 @@ const styles = StyleSheet.create({
   // Cores
   colorRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Theme.spacing.md,
     marginTop: Theme.spacing.sm,
   },

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, useWindowDimensions, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Theme } from '../ui/themes';
 import { Lock, Mail, ChevronRight } from 'lucide-react-native';
@@ -7,8 +17,6 @@ import { api } from '../services/api';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,31 +41,28 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.bgDecorationTopRight} />
-      <View style={styles.bgDecorationBottomLeft}>
-        <View style={styles.bgCircleLarge} />
-        <View style={styles.bgCircleSmall} />
-      </View>
-
-      <View style={[styles.content, isDesktop && styles.contentDesktop]}>
-        
-        <View style={[styles.brandContainer, isDesktop && styles.brandContainerDesktop]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollInner}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+      <View style={styles.centeredWrap}>
+        <View style={styles.brandContainer}>
           <Text style={styles.logoText}>
             Control<Text style={styles.logoAccent}>Tec</Text>
           </Text>
           <Text style={styles.brandSubtitle}>
             Soluções completas para sua assistência técnica
           </Text>
-          {isDesktop && (
-            <View style={styles.featuresList}>
-              <Text style={styles.featureItem}>✓ Gestão de Clientes e Aparelhos</Text>
-              <Text style={styles.featureItem}>✓ Ordens de Serviço em Tempo Real</Text>
-              <Text style={styles.featureItem}>✓ Controle Financeiro e Estoque</Text>
-            </View>
-          )}
         </View>
 
-        <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
+        <View style={styles.formContainer}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Acesse sua conta</Text>
             
@@ -115,6 +120,8 @@ export default function LoginScreen() {
           </View>
         </View>
       </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -122,71 +129,35 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.primary, // Fundo Azul Escuro Navy
-    overflow: 'hidden',
+    backgroundColor: Theme.colors.primary,
   },
-  // Decorações de fundo (Bolinhas laranjas e detalhes inspirados na imagem)
-  bgDecorationBottomLeft: {
-    position: 'absolute',
-    bottom: -50,
-    left: -50,
-    width: 250,
-    height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bgCircleLarge: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: Theme.colors.accent,
-    opacity: 0.8,
-  },
-  bgCircleSmall: {
-    position: 'absolute',
-    top: 0,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Theme.colors.accent,
-  },
-  bgDecorationTopRight: {
-    position: 'absolute',
-    top: -100,
-    right: -50,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)', // Azul clarinho translúcido
-  },
-  content: {
+  keyboardRoot: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    padding: Theme.spacing.lg,
   },
-  contentDesktop: {
-    flexDirection: 'row',
+  scroll: {
+    flex: 1,
+  },
+  scrollInner: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  centeredWrap: {
+    width: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    padding: Theme.spacing.xl * 2,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.xl,
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: Theme.spacing.xl * 1.5,
-    zIndex: 10,
-  },
-  brandContainerDesktop: {
-    alignItems: 'flex-start',
-    marginBottom: 0,
-    flex: 1,
+    marginBottom: Theme.spacing.xl,
+    maxWidth: 400,
+    width: '100%',
   },
   logoText: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '900',
-    color: Theme.colors.textInverse, // Branco
+    color: Theme.colors.textInverse,
     letterSpacing: -1,
   },
   logoAccent: {
@@ -201,23 +172,17 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     maxWidth: 400,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  formContainerDesktop: {
-    flex: 1,
-    alignItems: 'flex-end',
   },
   card: {
-    backgroundColor: Theme.colors.surface, // Branco
+    backgroundColor: Theme.colors.surface,
     padding: Theme.spacing.xl,
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: 20,
     width: '100%',
     maxWidth: 400,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
     elevation: 10,
   },
   cardTitle: {
@@ -240,9 +205,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Theme.colors.inputBackground,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.borderRadius.md,
     paddingHorizontal: Theme.spacing.md,
   },
   inputIcon: {
@@ -267,12 +230,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: Theme.colors.accent, // Amarelo/Laranja
+    backgroundColor: Theme.colors.accent,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.borderRadius.md,
     marginTop: Theme.spacing.md,
     shadowColor: Theme.colors.accent,
     shadowOffset: { width: 0, height: 4 },
@@ -301,15 +264,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Theme.colors.primary,
     fontWeight: 'bold',
-  },
-  featuresList: {
-    marginTop: Theme.spacing.xl,
-    gap: Theme.spacing.md,
-  },
-  featureItem: {
-    fontSize: 18,
-    color: Theme.colors.textInverse,
-    opacity: 0.9,
-    fontWeight: '500',
   },
 });

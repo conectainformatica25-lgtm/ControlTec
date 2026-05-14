@@ -1,37 +1,35 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
   ScrollView,
   Platform,
-  Alert
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Theme } from '../ui/themes';
-import { User, Mail, Lock, Building, CreditCard, ChevronLeft } from 'lucide-react-native';
+import { User, Mail, Lock, Building, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { api } from '../services/api';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     companyName: '',
-    cnpj: ''
+    cnpj: '',
   });
 
   const handleRegister = async () => {
     const { name, email, password, companyName, cnpj } = formData;
-    
+
     if (!name || !email || !password || !companyName || !cnpj) {
       alert('Por favor, preencha todos os campos');
       return;
@@ -51,56 +49,31 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
+      <KeyboardAvoidingView
+        style={styles.keyboardRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+      <View style={styles.root}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ChevronLeft color={Theme.colors.textInverse} size={24} />
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
 
-        <View style={[styles.content, isDesktop && styles.contentDesktop]}>
-          <View style={[styles.brandContainer, isDesktop && styles.brandContainerDesktop]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.brandContainer}>
             <Text style={styles.logoText}>
               Control<Text style={styles.logoAccent}>Tec</Text>
             </Text>
-            <Text style={styles.brandSubtitle}>
-              Comece a gerenciar sua assistência técnica agora mesmo de forma profissional.
-            </Text>
+            <Text style={styles.brandSubtitle}>Cadastro da sua empresa no sistema</Text>
           </View>
 
-          <View style={[styles.formContainer, isDesktop && styles.formContainerDesktop]}>
+          <View style={styles.formContainer}>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Crie sua conta</Text>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Seu Nome</Text>
-                <View style={styles.inputWrapper}>
-                  <User color={Theme.colors.textSecondary} size={20} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ex: João Silva"
-                    value={formData.name}
-                    onChangeText={(val) => setFormData({...formData, name: val})}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>E-mail</Text>
-                <View style={styles.inputWrapper}>
-                  <Mail color={Theme.colors.textSecondary} size={20} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="email@exemplo.com"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={formData.email}
-                    onChangeText={(val) => setFormData({...formData, email: val})}
-                  />
-                </View>
-              </View>
+              <Text style={styles.cardTitle}>Cadastro de Empresa</Text>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Nome da Empresa</Text>
@@ -108,9 +81,10 @@ export default function RegisterScreen() {
                   <Building color={Theme.colors.textSecondary} size={20} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Razão Social ou Fantasia"
+                    placeholder="Razão social ou nome fantasia"
+                    placeholderTextColor={Theme.colors.textSecondary}
                     value={formData.companyName}
-                    onChangeText={(val) => setFormData({...formData, companyName: val})}
+                    onChangeText={(val) => setFormData({ ...formData, companyName: val })}
                   />
                 </View>
               </View>
@@ -122,9 +96,40 @@ export default function RegisterScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="00.000.000/0001-00"
+                    placeholderTextColor={Theme.colors.textSecondary}
                     keyboardType="numeric"
                     value={formData.cnpj}
-                    onChangeText={(val) => setFormData({...formData, cnpj: val})}
+                    onChangeText={(val) => setFormData({ ...formData, cnpj: val })}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>E-mail Corporativo</Text>
+                <View style={styles.inputWrapper}>
+                  <Mail color={Theme.colors.textSecondary} size={20} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="contato@suaempresa.com.br"
+                    placeholderTextColor={Theme.colors.textSecondary}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={formData.email}
+                    onChangeText={(val) => setFormData({ ...formData, email: val })}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome do responsável</Text>
+                <View style={styles.inputWrapper}>
+                  <User color={Theme.colors.textSecondary} size={20} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nome completo do administrador"
+                    placeholderTextColor={Theme.colors.textSecondary}
+                    value={formData.name}
+                    onChangeText={(val) => setFormData({ ...formData, name: val })}
                   />
                 </View>
               </View>
@@ -136,26 +141,34 @@ export default function RegisterScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={Theme.colors.textSecondary}
                     secureTextEntry
                     value={formData.password}
-                    onChangeText={(val) => setFormData({...formData, password: val})}
+                    onChangeText={(val) => setFormData({ ...formData, password: val })}
                   />
                 </View>
               </View>
 
-              <TouchableOpacity 
-                style={[styles.registerButton, loading && { opacity: 0.7 }]} 
+              <TouchableOpacity
+                style={[styles.submitButton, loading && { opacity: 0.7 }]}
                 onPress={handleRegister}
                 disabled={loading}
               >
-                <Text style={styles.registerButtonText}>
-                  {loading ? 'Cadastrando...' : 'Criar Minha Conta'}
-                </Text>
+                <Text style={styles.submitButtonText}>{loading ? 'Cadastrando...' : 'Cadastrar'}</Text>
+                {!loading && <ChevronRight color={Theme.colors.textInverse} size={20} />}
               </TouchableOpacity>
+
+              <View style={styles.footerRow}>
+                <Text style={styles.footerText}>Já possui conta?</Text>
+                <TouchableOpacity onPress={() => router.replace('/')}>
+                  <Text style={styles.footerLink}>Entrar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -165,80 +178,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Theme.colors.primary,
   },
-  scrollContent: {
-    padding: Theme.spacing.lg,
-    paddingBottom: Theme.spacing.xl * 2,
+  keyboardRoot: {
+    flex: 1,
+  },
+  root: {
+    flex: 1,
   },
   backButton: {
+    position: 'absolute',
+    top: Theme.spacing.sm,
+    left: Theme.spacing.md,
+    zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Theme.spacing.xl,
+    paddingVertical: Theme.spacing.sm,
   },
   backButtonText: {
     color: Theme.colors.textInverse,
     fontSize: 16,
     marginLeft: Theme.spacing.xs,
   },
-  content: {
+  scroll: {
     flex: 1,
-    flexDirection: 'column',
   },
-  contentDesktop: {
-    flexDirection: 'row',
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    padding: Theme.spacing.xl,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.xl * 2,
+    paddingBottom: Theme.spacing.xl * 2,
   },
   brandContainer: {
     alignItems: 'center',
     marginBottom: Theme.spacing.xl,
-  },
-  brandContainerDesktop: {
-    alignItems: 'flex-start',
-    marginBottom: 0,
-    flex: 1,
-    paddingRight: Theme.spacing.xl * 2,
+    maxWidth: 400,
+    width: '100%',
   },
   logoText: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: '900',
     color: Theme.colors.textInverse,
+    letterSpacing: -1,
   },
   logoAccent: {
     color: Theme.colors.accent,
   },
   brandSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: Theme.colors.textInverse,
     opacity: 0.8,
+    marginTop: Theme.spacing.xs,
+    textAlign: 'center',
   },
   formContainer: {
     width: '100%',
-    maxWidth: 450,
-    alignSelf: 'center',
-  },
-  formContainerDesktop: {
-    flex: 1,
+    maxWidth: 400,
   },
   card: {
     backgroundColor: Theme.colors.surface,
     padding: Theme.spacing.xl,
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: 20,
+    width: '100%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
     elevation: 10,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: Theme.colors.textPrimary,
     marginBottom: Theme.spacing.xl,
     textAlign: 'center',
   },
   inputGroup: {
-    marginBottom: Theme.spacing.md,
+    marginBottom: Theme.spacing.lg,
   },
   label: {
     fontSize: 14,
@@ -250,9 +266,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Theme.colors.inputBackground,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.borderRadius.md,
     paddingHorizontal: Theme.spacing.md,
   },
   inputIcon: {
@@ -264,20 +278,43 @@ const styles = StyleSheet.create({
     color: Theme.colors.textPrimary,
     fontSize: 16,
     ...Platform.select({
-      web: { outlineStyle: 'none' }
+      web: { outlineStyle: 'none' },
     }),
   },
-  registerButton: {
+  submitButton: {
     backgroundColor: Theme.colors.accent,
-    height: 52,
-    borderRadius: Theme.borderRadius.sm,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Theme.spacing.lg,
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: Theme.borderRadius.md,
+    marginTop: Theme.spacing.md,
+    shadowColor: Theme.colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  registerButtonText: {
+  submitButtonText: {
     color: Theme.colors.textInverse,
     fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: Theme.spacing.xs,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Theme.spacing.xl,
+  },
+  footerText: {
+    fontSize: 14,
+    color: Theme.colors.textSecondary,
+    marginRight: Theme.spacing.xs,
+  },
+  footerLink: {
+    fontSize: 14,
+    color: Theme.colors.primary,
     fontWeight: 'bold',
   },
 });

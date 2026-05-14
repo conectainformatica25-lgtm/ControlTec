@@ -8,7 +8,6 @@ import {
   ScrollView, 
   Modal, 
   ActivityIndicator,
-  useWindowDimensions,
   Platform,
   KeyboardAvoidingView,
   Alert
@@ -16,10 +15,10 @@ import {
 import { Theme } from '../../ui/themes';
 import { Search, Plus, FileText, User, X, Edit2, Trash2, ChevronRight } from 'lucide-react-native';
 import { api } from '../../services/api';
+import { useBreakpoints } from '../../ui/useBreakpoints';
 
 export default function EstimatesScreen() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
+  const { isCompact, useTableLayout } = useBreakpoints();
   
   const [search, setSearch] = useState('');
   const [estimates, setEstimates] = useState<any[]>([]);
@@ -118,10 +117,10 @@ export default function EstimatesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Orçamentos</Text>
+      <View style={[styles.header, isCompact ? styles.headerCompact : undefined]}>
+        <Text style={[styles.pageTitle, isCompact ? styles.pageTitleBlock : undefined]}>Orçamentos</Text>
         <TouchableOpacity 
-          style={styles.addButton} 
+          style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} 
           onPress={() => {
             setFormData({ id: '', status: 'Pendente', description: '', items: '[]', totalValue: '0', validUntil: '', customerId: '' });
             setModalVisible(true);
@@ -148,7 +147,7 @@ export default function EstimatesScreen() {
           <ActivityIndicator size="large" color={Theme.colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <ScrollView style={styles.listContainer}>
-            {!isMobile && (
+            {!useTableLayout && (
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 2 }]}>Cliente / Descrição</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1 }]}>Status</Text>
@@ -158,7 +157,7 @@ export default function EstimatesScreen() {
             )}
 
             {filtered.map((item) => (
-              isMobile ? (
+              !useTableLayout ? (
                 <View key={item.id} style={styles.mobileCard}>
                   <View style={styles.mobileCardHeader}>
                     <View style={{ flex: 1 }}>
@@ -253,18 +252,21 @@ export default function EstimatesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: Theme.spacing.lg, backgroundColor: Theme.colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg },
+  container: { flex: 1, padding: Theme.spacing.lg, backgroundColor: Theme.colors.background, minWidth: 0 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Theme.spacing.lg, gap: Theme.spacing.md },
+  headerCompact: { flexDirection: 'column', alignItems: 'stretch' },
   pageTitle: { fontSize: 24, fontWeight: 'bold', color: Theme.colors.textInverse },
+  pageTitleBlock: { flexShrink: 1 },
   addButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.accent, paddingHorizontal: Theme.spacing.md, paddingVertical: Theme.spacing.sm, borderRadius: Theme.borderRadius.sm },
+  addButtonBlock: { alignSelf: 'stretch', justifyContent: 'center' },
   addButtonText: { color: Theme.colors.textInverse, fontWeight: 'bold', marginLeft: Theme.spacing.xs },
-  card: { flex: 1, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
+  card: { flex: 1, minHeight: 0, minWidth: 0, backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, padding: Theme.spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm, paddingHorizontal: Theme.spacing.md, marginBottom: Theme.spacing.lg, height: 44 },
   searchInput: { flex: 1, marginLeft: Theme.spacing.sm, fontSize: 15, color: Theme.colors.textPrimary, ...Platform.select({ web: { outlineStyle: 'none' } }) },
   listContainer: { flex: 1 },
   tableHeader: { flexDirection: 'row', paddingBottom: Theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: Theme.colors.border, marginBottom: Theme.spacing.sm },
   tableHeaderText: { fontSize: 12, fontWeight: 'bold', color: Theme.colors.textSecondary, textTransform: 'uppercase' },
-  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.inputBackground },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.inputBackground, minWidth: 0 },
   itemName: { fontSize: 15, fontWeight: 'bold', color: Theme.colors.textPrimary },
   itemSub: { fontSize: 13, color: Theme.colors.textSecondary },
   statusText: { fontSize: 14, fontWeight: 'bold' },
