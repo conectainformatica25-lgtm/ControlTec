@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -95,13 +95,15 @@ model ServiceOrder {
 }
 
 model Estimate {
-  id         String   @id @default(uuid())
-  code       String
-  status     String   @default("Pendente")
-  total      Float    @default(0)
-  items      String?
-  notes      String?
-  customerId String
+  id          String   @id @default(uuid())
+  code        String
+  description String?
+  status      String   @default("Pendente")
+  total       Float    @default(0)
+  items       String?
+  notes       String?
+  validUntil  String?
+  customerId  String
   customer   Customer @relation(fields: [customerId], references: [id])
   deviceId   String?
   device     Device?  @relation(fields: [deviceId], references: [id])

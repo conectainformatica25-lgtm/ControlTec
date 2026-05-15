@@ -7,10 +7,14 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', async (req: Request, res: Response) => {
-  const items = await prisma.estimate.findMany({ 
-    where: { companyId: (req as any).companyId }, 
-    include: { customer: { select: { name: true } }, device: { select: { brand: true } } },
-    orderBy: { createdAt: 'desc' } 
+  const items = await prisma.estimate.findMany({
+    where: { companyId: (req as any).companyId },
+    include: {
+      customer: { select: { name: true, document: true, phone: true, email: true, address: true } },
+      device: { select: { brand: true, type: true } },
+      company: { select: { name: true, cnpj: true, phone: true, email: true, address: true } },
+    },
+    orderBy: { createdAt: 'desc' }
   });
   res.json(items);
 });
