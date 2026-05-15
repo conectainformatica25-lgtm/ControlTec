@@ -1,6 +1,16 @@
 import { storage } from './storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+const getApiUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
+    return 'https://controltec-api.onrender.com';
+  }
+  
+  return 'http://localhost:4000';
+};
+
+const API_URL = getApiUrl();
 
 class ApiService {
   private token: string | null = null;
