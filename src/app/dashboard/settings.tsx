@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  ScrollView, 
-  Switch
+  View, Text, StyleSheet, TextInput, TouchableOpacity, 
+  ScrollView, Switch, Modal, ActivityIndicator, Platform 
 } from 'react-native';
 import { Theme } from '../../ui/themes';
 import { useBreakpoints } from '../../ui/useBreakpoints';
 import { 
   Building2, User, Bell, Shield, Palette, Printer, 
-  Save, ChevronRight, LogOut, Mail, Phone, MapPin
+  Save, ChevronRight, LogOut, Mail, Phone, MapPin,
+  Users, Trash2, Plus, X
 } from 'lucide-react-native';
+import { api } from '../../services/api';
 
-type SectionId = 'empresa' | 'usuario' | 'notificacoes' | 'seguranca' | 'aparencia' | 'impressao';
+type SectionId = 'empresa' | 'equipe' | 'usuario' | 'notificacoes' | 'seguranca' | 'aparencia' | 'impressao';
 
 const MENU_ITEMS: { id: SectionId; title: string; desc: string; icon: any }[] = [
   { id: 'empresa', title: 'Dados da Empresa', desc: 'CNPJ, endereço e contato', icon: Building2 },
+  { id: 'equipe', title: 'Equipe', desc: 'Gestão de funcionários', icon: Users },
   { id: 'usuario', title: 'Meu Perfil', desc: 'Nome, e-mail e senha', icon: User },
   { id: 'notificacoes', title: 'Notificações', desc: 'Alertas e avisos do sistema', icon: Bell },
   { id: 'seguranca', title: 'Segurança', desc: 'Senha e autenticação', icon: Shield },
@@ -41,6 +39,66 @@ export default function SettingsScreen() {
   const [autoLock, setAutoLock] = useState(true);
   const [printLogo, setPrintLogo] = useState(true);
   const [printTerms, setPrintTerms] = useState(true);
+
+  // Novos Estados Impressão
+  const [paperSizeOs, setPaperSizeOs] = useState('A4');
+  const [paperSizeReceipt, setPaperSizeReceipt] = useState('80mm');
+  const [labelWidth, setLabelWidth] = useState('50');
+  const [labelHeight, setLabelHeight] = useState('30');
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userModal, setUserModal] = useState(false);
+  const [formUser, setFormUser] = useState({ name: '', email: '', password: '', role: 'Técnico' });
+
+  useEffect(() => {
+    if (localStorage.getItem('printSettings_paperSizeOs')) setPaperSizeOs(localStorage.getItem('printSettings_paperSizeOs')!);
+    if (localStorage.getItem('printSettings_paperSizeReceipt')) setPaperSizeReceipt(localStorage.getItem('printSettings_paperSizeReceipt')!);
+    if (localStorage.getItem('printSettings_labelWidth')) setLabelWidth(localStorage.getItem('printSettings_labelWidth')!);
+    if (localStorage.getItem('printSettings_labelHeight')) setLabelHeight(localStorage.getItem('printSettings_labelHeight')!);
+  }, []);
+
+  const savePrintSettings = (key: string, value: string) => {
+    localStorage.setItem(key, value);
+    if (key === 'printSettings_paperSizeOs') setPaperSizeOs(value);
+    if (key === 'printSettings_paperSizeReceipt') setPaperSizeReceipt(value);
+    if (key === 'printSettings_labelWidth') setLabelWidth(value);
+    if (key === 'printSettings_labelHeight') setLabelHeight(value);
+  };
+
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const data = await api.getAll('users');
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'equipe') loadUsers();
+  }, [activeSection]);
+
+  const handleSaveUser = async () => {
+    if (!formUser.name || !formUser.email || !formUser.password) return alert("Preencha os campos obrigatórios");
+    try {
+      await api.create('users', formUser);
+      setUserModal(false);
+      setFormUser({ name: '', email: '', password: '', role: 'Técnico' });
+      loadUsers();
+    } catch(err: any) { alert(err.message); }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if(confirm('Deseja excluir este funcionário?')) {
+      try {
+        await api.remove('users', id);
+        loadUsers();
+      } catch(err: any) { alert(err.message); }
+    }
+  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -87,6 +145,50 @@ export default function SettingsScreen() {
               <Save size={18} color={Theme.colors.textInverse} />
               <Text style={styles.saveBtnText}>Salvar Alterações</Text>
             </TouchableOpacity>
+          </View>
+        );
+
+      case 'equipe':
+        return (
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View>
+                <Text style={styles.sectionTitle}>Equipe</Text>
+                <Text style={styles.sectionDesc}>Gerencie os acessos dos seus funcionários.</Text>
+              </View>
+              <TouchableOpacity style={styles.saveBtn} onPress={() => setUserModal(true)}>
+                <Plus size={18} color="#FFF" />
+                <Text style={styles.saveBtnText}>Novo Funcionário</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {loadingUsers ? <ActivityIndicator size="large" color={Theme.colors.primary} style={{marginTop: 40}} /> : (
+              <View>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.tableHeaderText, { flex: 2 }]}>Nome / E-mail</Text>
+                  <Text style={[styles.tableHeaderText, { flex: 1 }]}>Cargo</Text>
+                  <Text style={[styles.tableHeaderText, { width: 80, textAlign: 'center' }]}>Ações</Text>
+                </View>
+                {users.map(u => (
+                  <View key={u.id} style={styles.tableRow}>
+                    <View style={{ flex: 2 }}>
+                      <Text style={styles.itemName}>{u.name}</Text>
+                      <Text style={styles.itemSub}>{u.email}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={[styles.statusBadge, { backgroundColor: '#EEF2FF' }]}>
+                        <Text style={[styles.statusText, { color: Theme.colors.primary }]}>{u.role}</Text>
+                      </View>
+                    </View>
+                    <View style={{ width: 80, alignItems: 'center' }}>
+                      <TouchableOpacity style={styles.actionBtn} onPress={() => handleDeleteUser(u.id)}>
+                        <Trash2 size={16} color="#DC3545" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         );
 
@@ -196,27 +298,87 @@ export default function SettingsScreen() {
           <View>
             <Text style={styles.sectionTitle}>Impressão</Text>
             <Text style={styles.sectionDesc}>Configure os modelos de impressão.</Text>
-            <ToggleRow label="Incluir Logo da Empresa" desc="Exibir logotipo no cabeçalho" value={printLogo} onToggle={setPrintLogo} />
-            <ToggleRow label="Termos e Condições" desc="Adicionar termos no rodapé da OS" value={printTerms} onToggle={setPrintTerms} />
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Texto de Garantia (Rodapé)</Text>
-              <TextInput 
-                style={[styles.input, styles.textArea]} 
-                defaultValue="Garantia de 90 dias para peças e serviços, exceto mau uso."
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+            
+            <View style={{ marginBottom: Theme.spacing.lg, paddingBottom: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.border }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Orçamentos e Notas de Serviço</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Tamanho do Papel</Text>
+                <View style={styles.selectWrapper}>
+                  <select 
+                    style={styles.htmlSelect as any} 
+                    value={paperSizeOs} 
+                    onChange={(e: any) => savePrintSettings('printSettings_paperSizeOs', e.target.value)}
+                  >
+                    <option value="A4">Padrão A4 / Carta</option>
+                    <option value="80mm">Bobina Térmica 80mm</option>
+                    <option value="58mm">Bobina Térmica 58mm</option>
+                  </select>
+                </View>
+              </View>
+              <ToggleRow label="Incluir Logo da Empresa" desc="Exibir logotipo no cabeçalho" value={printLogo} onToggle={setPrintLogo} />
+              <ToggleRow label="Termos e Condições" desc="Adicionar termos no rodapé da OS" value={printTerms} onToggle={setPrintTerms} />
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Observações Padrão (Orçamento)</Text>
+                <TextInput 
+                  style={[styles.input, styles.textArea]} 
+                  defaultValue="Orçamento válido por 15 dias. Valores sujeitos a alteração."
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Observações Padrão (Orçamento)</Text>
-              <TextInput 
-                style={[styles.input, styles.textArea]} 
-                defaultValue="Orçamento válido por 15 dias. Valores sujeitos a alteração."
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+
+            <View style={{ marginBottom: Theme.spacing.lg, paddingBottom: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.border }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Recibos e Cupons</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Tamanho do Papel</Text>
+                <View style={styles.selectWrapper}>
+                  <select 
+                    style={styles.htmlSelect as any} 
+                    value={paperSizeReceipt} 
+                    onChange={(e: any) => savePrintSettings('printSettings_paperSizeReceipt', e.target.value)}
+                  >
+                    <option value="A4">Padrão A4 / Carta</option>
+                    <option value="80mm">Bobina Térmica 80mm</option>
+                    <option value="58mm">Bobina Térmica 58mm</option>
+                  </select>
+                </View>
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Texto de Garantia (Rodapé do Recibo)</Text>
+                <TextInput 
+                  style={[styles.input, styles.textArea]} 
+                  defaultValue="Garantia de 90 dias para peças e serviços, exceto mau uso."
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+
+            <View style={{ marginBottom: Theme.spacing.md }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Etiquetas de Identificação</Text>
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, {flex: 1}]}>
+                  <Text style={styles.label}>Largura (mm)</Text>
+                  <TextInput 
+                    style={styles.input} 
+                    value={labelWidth} 
+                    onChangeText={(t) => savePrintSettings('printSettings_labelWidth', t)} 
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={[styles.formGroup, {flex: 1}]}>
+                  <Text style={styles.label}>Altura (mm)</Text>
+                  <TextInput 
+                    style={styles.input} 
+                    value={labelHeight} 
+                    onChangeText={(t) => savePrintSettings('printSettings_labelHeight', t)} 
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
             </View>
             <TouchableOpacity style={styles.saveBtn}>
               <Save size={18} color={Theme.colors.textInverse} />
@@ -271,6 +433,54 @@ export default function SettingsScreen() {
           {renderContent()}
         </ScrollView>
       </View>
+
+      <Modal visible={userModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Novo Funcionário</Text>
+              <TouchableOpacity onPress={() => setUserModal(false)}>
+                <X color={Theme.colors.textSecondary} size={24} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalForm}>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Nome Completo</Text>
+                <TextInput style={styles.input} value={formUser.name} onChangeText={t => setFormUser({...formUser, name: t})} />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>E-mail</Text>
+                <TextInput style={styles.input} value={formUser.email} onChangeText={t => setFormUser({...formUser, email: t})} autoCapitalize="none" keyboardType="email-address" />
+              </View>
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, {flex: 1}]}>
+                  <Text style={styles.label}>Senha de Acesso</Text>
+                  <TextInput style={styles.input} value={formUser.password} onChangeText={t => setFormUser({...formUser, password: t})} secureTextEntry />
+                </View>
+                <View style={[styles.formGroup, {flex: 1}]}>
+                  <Text style={styles.label}>Cargo / Permissão</Text>
+                  <View style={styles.selectWrapper}>
+                    <select style={styles.htmlSelect as any} value={formUser.role} onChange={(e: any) => setFormUser({...formUser, role: e.target.value})}>
+                      <option value="Técnico">Técnico</option>
+                      <option value="Atendente">Atendente</option>
+                      <option value="Gerente">Gerente</option>
+                    </select>
+                  </View>
+                </View>
+              </View>
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setUserModal(false)}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtnModal} onPress={handleSaveUser}>
+                <Text style={styles.saveBtnText}>Criar Acesso</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -495,6 +705,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Theme.colors.textInverse,
   },
+  
+  // Modal & Table Styles
+  tableHeader: { flexDirection: 'row', paddingBottom: Theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: Theme.colors.border, marginBottom: Theme.spacing.sm },
+  tableHeaderText: { fontSize: 12, fontWeight: 'bold', color: Theme.colors.textSecondary, textTransform: 'uppercase' },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.inputBackground },
+  itemName: { fontSize: 15, fontWeight: 'bold', color: Theme.colors.textPrimary },
+  itemSub: { fontSize: 13, color: Theme.colors.textSecondary },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, alignSelf: 'flex-start' },
+  statusText: { fontSize: 12, fontWeight: '700' },
+  actionBtn: { padding: 6, borderRadius: 6, backgroundColor: Theme.colors.inputBackground },
+  
+  selectWrapper: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm },
+  htmlSelect: { width: '100%', height: '100%', border: 'none', background: 'transparent', padding: '0 10px', fontSize: 16, outline: 'none' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: Theme.spacing.lg },
+  modalContent: { backgroundColor: Theme.colors.surface, borderRadius: Theme.borderRadius.md, width: '100%', maxWidth: 500 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Theme.spacing.lg, borderBottomWidth: 1, borderBottomColor: Theme.colors.border },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: Theme.colors.textPrimary },
+  modalForm: { padding: Theme.spacing.lg },
+  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', padding: Theme.spacing.lg, borderTopWidth: 1, borderTopColor: Theme.colors.border, gap: Theme.spacing.md },
+  cancelButton: { paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.lg },
+  cancelButtonText: { fontSize: 16, color: Theme.colors.textSecondary, fontWeight: '600' },
+  saveBtnModal: { backgroundColor: Theme.colors.primary, paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.xl, borderRadius: Theme.borderRadius.sm, alignItems: 'center' },
 
   // Cores
   colorRow: {

@@ -13,7 +13,7 @@ import {
   Alert
 } from 'react-native';
 import { Theme } from '../../ui/themes';
-import { Search, Plus, MonitorSmartphone, User, X, Edit2, Trash2 } from 'lucide-react-native';
+import { Search, Plus, MonitorSmartphone, User, X, Edit2, Trash2, Printer } from 'lucide-react-native';
 import { api } from '../../services/api';
 import { useBreakpoints } from '../../ui/useBreakpoints';
 
@@ -84,7 +84,10 @@ export default function EquipmentScreen() {
   };
 
   const handleEdit = (item: any) => {
-    setFormData(item);
+    setFormData({
+      ...item,
+      customerId: item.customer?.name || item.customerId
+    });
     setModalVisible(true);
   };
 
@@ -105,6 +108,72 @@ export default function EquipmentScreen() {
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Excluir', style: 'destructive', onPress: performDelete }
       ]);
+    }
+  };
+
+  const handlePrint = (item: any) => {
+    if (Platform.OS === 'web') {
+      const labelWidth = localStorage.getItem('printSettings_labelWidth') || '50';
+      const labelHeight = localStorage.getItem('printSettings_labelHeight') || '30';
+
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            @page {
+              size: ${labelWidth}mm ${labelHeight}mm;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              width: ${labelWidth}mm;
+              height: ${labelHeight}mm;
+              font-family: Arial, sans-serif;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              box-sizing: border-box;
+              padding: 1mm;
+            }
+            .content {
+              border: 1px dashed #ccc;
+              height: 100%;
+              padding: 2mm;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-around;
+            }
+            h3 { margin: 0; font-size: 11px; text-align: center; }
+            p { margin: 0; font-size: 9px; line-height: 1.2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+            .date { font-size: 7px; text-align: right; margin-top: auto; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="content">
+            <h3>ControlTec</h3>
+            <p><strong>CLI:</strong> ${item.customer?.name || 'S/N'}</p>
+            <p><strong>MOD:</strong> ${item.type} ${item.brand} ${item.model}</p>
+            <p><strong>S/N:</strong> ${item.serialNumber || 'N/A'}</p>
+            <div class="date">${new Date().toLocaleDateString('pt-BR')}</div>
+          </div>
+        </body>
+        </html>
+      `;
+      const printWindow = window.open('', '', 'width=400,height=400');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 250);
+      }
+    } else {
+      Alert.alert("Aviso", "A impressão de etiquetas está disponível apenas na versão Web.");
     }
   };
 
@@ -165,6 +234,9 @@ export default function EquipmentScreen() {
                       <Text style={styles.itemBrand}>{item.brand}</Text>
                     </View>
                     <View style={styles.mobileActions}>
+                      <TouchableOpacity onPress={() => handlePrint(item)} style={styles.actionIcon}>
+                        <Printer size={18} color={Theme.colors.primary} />
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => handleEdit(item)} style={styles.actionIcon}>
                         <Edit2 size={18} color={Theme.colors.primary} />
                       </TouchableOpacity>
@@ -193,7 +265,10 @@ export default function EquipmentScreen() {
                   <Text style={[styles.itemBrand, { flex: 1 }]}>{item.brand}</Text>
                   <Text style={[styles.itemCustomer, { flex: 1.5 }]}>{item.customer?.name || '-'}</Text>
                   <Text style={[styles.itemSN, { flex: 1 }]}>{item.serialNumber || '-'}</Text>
-                  <View style={{ width: 80, flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
+                  <View style={{ width: 100, flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
+                    <TouchableOpacity onPress={() => handlePrint(item)}>
+                      <Printer size={18} color={Theme.colors.primary} />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleEdit(item)}>
                       <Edit2 size={18} color={Theme.colors.primary} />
                     </TouchableOpacity>
@@ -243,16 +318,27 @@ export default function EquipmentScreen() {
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Cliente Proprietário</Text>
-                <View style={styles.selectWrapper}>
-                  <select 
-                    style={styles.htmlSelect}
-                    value={formData.customerId}
-                    onChange={(e) => setFormData({...formData, customerId: e.target.value})}
-                  >
-                    <option value="">Selecione um cliente</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </View>
+                {Platform.OS === 'web' ? (
+                  <View style={styles.selectWrapper}>
+                    <input 
+                      list="customers-list"
+                      style={styles.htmlSelect}
+                      value={formData.customerId}
+                      onChange={(e) => setFormData({...formData, customerId: e.target.value})}
+                      placeholder="Digite o nome ou selecione..."
+                    />
+                    <datalist id="customers-list">
+                      {customers.map(c => <option key={c.id} value={c.name} />)}
+                    </datalist>
+                  </View>
+                ) : (
+                  <TextInput 
+                    style={styles.input} 
+                    value={formData.customerId} 
+                    onChangeText={v => setFormData({...formData, customerId: v})} 
+                    placeholder="Digite o nome do cliente..."
+                  />
+                )}
               </View>
             </ScrollView>
             <View style={styles.modalFooter}>

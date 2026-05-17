@@ -13,7 +13,7 @@ import {
   Alert
 } from 'react-native';
 import { Theme } from '../../ui/themes';
-import { ChevronLeft, ChevronRight, Search, Plus, CalendarDays, User, MapPin, Phone, Clock, X, Edit2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Search, Plus, CalendarDays, User, MapPin, Phone, Clock, X, Edit2, Trash2 } from 'lucide-react-native';
 import { api } from '../../services/api';
 import { useBreakpoints } from '../../ui/useBreakpoints';
 
@@ -36,6 +36,7 @@ export default function ScheduleScreen() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
@@ -76,16 +77,41 @@ export default function ScheduleScreen() {
 
   const handleSave = async () => {
     if (!formData.clientName || !formData.date) return alert('Cliente e Data são obrigatórios');
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       if (formData.id) await api.update('schedules', formData.id, formData);
       else {
         const { id, ...data } = formData;
         await api.create('schedules', data);
       }
+      
+      const newDate = new Date(formData.date);
+      if (!isNaN(newDate.getTime())) {
+        setCurrentYear(newDate.getUTCFullYear());
+        setCurrentMonth(newDate.getUTCMonth());
+        setSelectedDay(newDate.getUTCDate());
+      }
+
       setModalVisible(false);
       fetchData();
     } catch (error: any) {
       alert(error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
+        api.remove('schedules', id).then(() => fetchData()).catch((e: any) => alert(e.message));
+      }
+    } else {
+      Alert.alert('Excluir', 'Tem certeza que deseja excluir?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: () => api.remove('schedules', id).then(() => fetchData()).catch((e: any) => alert(e.message)) }
+      ]);
     }
   };
 
@@ -143,11 +169,18 @@ export default function ScheduleScreen() {
             {filtered.length === 0 ? <Text style={styles.emptyText}>Nenhum agendamento.</Text> : filtered.map(item => (
               <View key={item.id} style={styles.scheduleItem}>
                 <View style={styles.scheduleInfo}>
-                  <Text style={styles.scheduleService}>{item.service}</Text>
-                  <Text style={styles.scheduleMeta}><User size={12} /> {item.clientName}</Text>
+                  <Text style={styles.scheduleService}>{item.clientName}</Text>
+                  <Text style={styles.scheduleMeta}><CalendarDays size={12} /> {item.date ? item.date.split('T')[0].split('-').reverse().join('/') : ''} - {item.service}</Text>
                   <Text style={styles.scheduleMeta}><Clock size={12} /> {item.time} ({item.duration})</Text>
                 </View>
-                <TouchableOpacity onPress={() => { setFormData(item); setModalVisible(true); }}><Edit2 size={18} color={Theme.colors.primary} /></TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity onPress={() => { 
+                    const formattedDate = item.date ? item.date.split('T')[0] : '';
+                    setFormData({ ...item, date: formattedDate }); 
+                    setModalVisible(true); 
+                  }}><Edit2 size={18} color={Theme.colors.primary} /></TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(item.id)}><Trash2 size={18} color={Theme.colors.error || '#EF4444'} /></TouchableOpacity>
+                </View>
               </View>
             ))}
           </ScrollView>
@@ -161,10 +194,13 @@ export default function ScheduleScreen() {
             <Text style={styles.modalTitle}>Agendar Visita</Text>
             <TextInput style={styles.input} placeholder="Cliente" value={formData.clientName} onChangeText={v => setFormData({...formData, clientName: v})} />
             <TextInput style={styles.input} placeholder="Serviço" value={formData.service} onChangeText={v => setFormData({...formData, service: v})} />
+            <TextInput style={styles.input} placeholder="Data (AAAA-MM-DD)" value={formData.date} onChangeText={v => setFormData({...formData, date: v})} />
             <TextInput style={styles.input} placeholder="Horário (Ex: 14:00)" value={formData.time} onChangeText={v => setFormData({...formData, time: v})} />
             <View style={styles.modalFooter}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}><Text>Cancelar</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSave}><Text style={{color:'#FFF'}}>Salvar</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => setModalVisible(false)} disabled={isSaving}><Text>Cancelar</Text></TouchableOpacity>
+              <TouchableOpacity style={[styles.saveButton, isSaving && { opacity: 0.7 }]} onPress={handleSave} disabled={isSaving}>
+                {isSaving ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={{color:'#FFF'}}>Salvar</Text>}
+              </TouchableOpacity>
             </View>
           </View>
         </View>

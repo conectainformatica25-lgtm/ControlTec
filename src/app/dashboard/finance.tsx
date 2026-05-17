@@ -111,7 +111,7 @@ export default function FinanceScreen() {
 
       <View style={[styles.summaryCards, isCompact ? styles.summaryCardsMobile : undefined]}>
         <View style={[styles.summaryCard, { borderLeftColor: '#10B981' }]}>
-          <Text style={styles.summaryLabel}>Total Receitas</Text>
+          <Text style={styles.summaryLabel}>Total Entradas</Text>
           <Text style={[styles.summaryValue, { color: '#10B981' }]}>R$ {totalIncome.toFixed(2)}</Text>
         </View>
         <View style={[styles.summaryCard, { borderLeftColor: '#EF4444' }]}>

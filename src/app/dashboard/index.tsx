@@ -28,6 +28,7 @@ export default function Home() {
     monthlyRevenue: 0,
     pendingEstimates: 0
   });
+  const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -48,6 +49,19 @@ export default function Home() {
             .reduce((acc: number, f: any) => acc + f.amount, 0),
           pendingEstimates: estimates.filter((e: any) => e.status === 'Pendente').length
         });
+
+        const recentOrders = orders.slice(0, 3).map((o: any) => ({
+          id: o.id,
+          text: `Nova OS ${o.code} criada`,
+          time: new Date(o.createdAt).toLocaleDateString('pt-BR')
+        }));
+        const recentEstimates = estimates.slice(0, 3).map((e: any) => ({
+          id: e.id,
+          text: `Orçamento ${e.code} gerado`,
+          time: new Date(e.createdAt).toLocaleDateString('pt-BR')
+        }));
+        
+        setActivities([...recentOrders, ...recentEstimates].slice(0, 4));
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
       } finally {
@@ -117,16 +131,18 @@ export default function Home() {
             </TouchableOpacity>
           </View>
 
-          {[1, 2, 3].map((_, i) => (
+          {activities.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginTop: 20, color: Theme.colors.textSecondary }}>Nenhuma atividade recente.</Text>
+          ) : activities.map((act, i) => (
             <View key={i} style={styles.activityItem}>
               <View style={styles.activityIcon}>
                 <Clock size={16} color={Theme.colors.textSecondary} />
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityText}>
-                  <Text style={styles.activityHighlight}>João Silva</Text> aprovou o orçamento <Text style={styles.activityHighlight}>#ORC-2304</Text>
+                  {act.text}
                 </Text>
-                <Text style={styles.activityTime}>Há 2 horas</Text>
+                <Text style={styles.activityTime}>{act.time}</Text>
               </View>
             </View>
           ))}

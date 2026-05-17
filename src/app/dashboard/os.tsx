@@ -36,7 +36,8 @@ export default function OSScreen() {
     observations: '',
     totalValue: '0',
     customerId: '',
-    deviceId: ''
+    deviceId: '',
+    deviceModel: ''
   });
 
   const fetchData = async () => {
@@ -83,7 +84,7 @@ export default function OSScreen() {
       console.log('OSScreen: save successful');
       setModalVisible(false);
       fetchData();
-      setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '' });
+      setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '', deviceModel: '' });
     } catch (error: any) {
       console.error('OSScreen Save Error:', error.message);
       Alert.alert('Erro', error.message);
@@ -95,6 +96,8 @@ export default function OSScreen() {
   const handleEdit = (item: any) => {
     setFormData({
       ...item,
+      deviceId: item.device?.type || '',
+      deviceModel: item.device?.model || '',
       totalValue: String(item.totalValue)
     });
     setModalVisible(true);
@@ -143,7 +146,7 @@ export default function OSScreen() {
         <TouchableOpacity 
           style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} 
           onPress={() => {
-            setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '' });
+            setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '', deviceModel: '' });
             setModalVisible(true);
           }}
         >
@@ -271,12 +274,25 @@ export default function OSScreen() {
                       onChange={(e) => setFormData({...formData, deviceId: e.target.value})}
                     >
                       <option value="">Selecione</option>
-                      {devices.filter(d => d.customerId === formData.customerId).map(d => (
-                        <option key={d.id} value={d.id}>{d.brand} {d.model}</option>
-                      ))}
+                      <option value="Celular">Celular</option>
+                      <option value="Notebook">Notebook</option>
+                      <option value="Tablet">Tablet</option>
+                      <option value="Computador">Computador</option>
+                      <option value="Impressora">Impressora</option>
+                      <option value="Outros">Outros</option>
                     </select>
                   </View>
                 </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Modelo do Aparelho (Opcional)</Text>
+                <TextInput 
+                  style={styles.input} 
+                  placeholder="Ex: iPhone 13 Preto, Dell Inspiron..." 
+                  value={formData.deviceModel} 
+                  onChangeText={v => setFormData({...formData, deviceModel: v})} 
+                />
               </View>
 
               <View style={styles.inputGroup}>

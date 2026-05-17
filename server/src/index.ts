@@ -9,6 +9,7 @@ import { estimateRoutes } from './routes/estimates.routes';
 import { inventoryRoutes } from './routes/inventory.routes';
 import { financeRoutes } from './routes/finance.routes';
 import { scheduleRoutes } from './routes/schedule.routes';
+import { userRoutes } from './routes/users.routes';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use('/api/estimates', estimateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check e Rota Inicial
 app.get('/', (_req, res) => {

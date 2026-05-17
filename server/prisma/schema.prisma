@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -59,13 +59,15 @@ model Customer {
 }
 
 model Device {
-  id         String   @id @default(uuid())
-  type       String
-  brand      String
-  serial     String?
-  defect     String?
-  status     String   @default("Em diagnóstico")
-  customerId String
+  id           String   @id @default(uuid())
+  type         String
+  brand        String
+  model        String?
+  serialNumber String?
+  serial       String?
+  defect       String?
+  status       String   @default("Em diagnóstico")
+  customerId   String
   customer   Customer @relation(fields: [customerId], references: [id])
   companyId  String
   company    Company  @relation(fields: [companyId], references: [id])

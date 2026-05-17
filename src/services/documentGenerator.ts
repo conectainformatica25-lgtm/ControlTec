@@ -208,7 +208,55 @@ const BASE_STYLES = `
   }
 `;
 
+const THERMAL_STYLES = (width: string) => `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #fff; color: #000;
+    padding: 5px; width: ${width}; margin: 0 auto;
+    font-size: 12px;
+  }
+  .page { width: 100%; box-shadow: none; padding: 0; }
+  .header { background: transparent; color: #000; padding: 0 0 10px 0; text-align: center; border-bottom: 1px dashed #000; display: block; }
+  .header-left { display: block; }
+  .company-name { font-size: 16px; font-weight: bold; }
+  .company-name span { color: #000; }
+  .company-info { font-size: 10px; margin-top: 4px; }
+  .doc-badge { text-align: center; margin-top: 10px; }
+  .doc-type { font-size: 14px; font-weight: bold; }
+  .doc-number, .doc-date { font-size: 10px; }
+  .body { padding: 10px 0; }
+  .section { margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+  .section-title { font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 5px; border-bottom: none; }
+  .info-grid { display: block; }
+  .info-item { margin-bottom: 4px; }
+  .info-item label { font-size: 10px; display: inline-block; width: 60px; font-weight: bold; }
+  .info-item p { font-size: 10px; display: inline; margin-left: 5px; }
+  .items-table { width: 100%; font-size: 10px; }
+  .items-table th { background: transparent; color: #000; padding: 2px 0; border-bottom: 1px solid #000; }
+  .items-table td { padding: 2px 0; border-bottom: 1px dashed #ccc; }
+  .description-box { font-size: 10px; padding: 5px; border: none; background: transparent; }
+  .total-section { background: transparent; color: #000; padding: 10px 0; text-align: right; display: block; border-bottom: 1px dashed #000; border-radius: 0; margin-top: 0; }
+  .total-label { font-size: 12px; font-weight: bold; }
+  .total-value { font-size: 16px; font-weight: bold; }
+  .signature-section { display: block; margin-top: 20px; }
+  .signature-box { margin-bottom: 20px; }
+  .signature-line { border-top: 1px dashed #000; }
+  .footer { background: transparent; padding: 10px 0; text-align: center; border-top: none; }
+  .footer p { font-size: 9px; color: #000; }
+  .stamp { border-color: #000 !important; color: #000 !important; font-size: 10px; padding: 2px 6px; }
+  .header-left svg { display: none; }
+  .watermark { display: none; }
+  .guarantee-box { border: 1px dashed #000; background: transparent; padding: 5px; margin-bottom: 10px; border-radius: 0;}
+  .guarantee-icon { display: none; }
+  .guarantee-text h4 { color: #000; font-size: 10px; }
+  .guarantee-text p { font-size: 9px; color: #000; }
+  @media print { .no-print { display: none !important; } }
+`;
+
 const ACTION_BAR = (docType: string, whatsappText: string) => `
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <div class="no-print" style="
     position: fixed; bottom: 0; left: 0; right: 0;
     background: #0F2A5A;
@@ -224,7 +272,7 @@ const ACTION_BAR = (docType: string, whatsappText: string) => `
     ">
       🖨️ Salvar / Imprimir PDF
     </button>
-    <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(whatsappText)}','_blank')" style="
+    <button onclick="shareViaWhatsApp()" style="
       background: #25D366; color: #fff; border: none;
       padding: 12px 28px; border-radius: 8px; font-size: 15px;
       font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -240,6 +288,59 @@ const ACTION_BAR = (docType: string, whatsappText: string) => `
     </button>
   </div>
   <div style="height: 80px;" class="no-print"></div>
+
+  <script>
+    async function shareViaWhatsApp() {
+      const btn = document.querySelector('button[onclick="shareViaWhatsApp()"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ Gerando PDF...';
+      btn.disabled = true;
+
+      try {
+        const element = document.querySelector('.page');
+        const opt = {
+          margin:       0,
+          filename:     '${docType}.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+        const file = new File([pdfBlob], '${docType}.pdf', { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          // Celular / PC compatível
+          await navigator.share({
+            title: '${docType}',
+            text: \`${whatsappText}\`,
+            files: [file]
+          });
+        } else {
+          // Fallback para PC (WhatsApp Web não aceita arquivo via link)
+          alert("O seu navegador de PC não suporta envio direto. O PDF será baixado automaticamente e o WhatsApp abrirá para você anexá-lo!");
+          
+          const url = window.URL.createObjectURL(pdfBlob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = '${docType}.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          
+          setTimeout(() => {
+             window.open('https://wa.me/?text=' + encodeURIComponent(\`${whatsappText}\`), '_blank');
+          }, 1000);
+        }
+      } catch (err) {
+        console.error("Erro ao compartilhar:", err);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+  </script>
 `;
 
 export function generateRecibo(data: DocumentData): void {
@@ -248,6 +349,11 @@ export function generateRecibo(data: DocumentData): void {
   const docNum = getDocNumber(estimate.id);
   const date = formatDate(estimate.createdAt);
   const total = formatCurrency(estimate.totalValue);
+
+  const paperSize = localStorage.getItem('printSettings_paperSizeReceipt') || '80mm';
+  const isThermal = paperSize === '80mm' || paperSize === '58mm';
+  const thermalWidth = paperSize === '80mm' ? '300px' : '220px';
+  const activeStyles = isThermal ? THERMAL_STYLES(thermalWidth) : BASE_STYLES;
 
   const whatsappMsg = `*RECIBO DE SERVIÇO - ${company.name}*\n\nCliente: ${customer.name}\nDoc: ${docNum}\nData: ${date}\nTotal: ${total}\n\nPara visualizar o recibo completo, solicite o arquivo PDF.`;
 
@@ -268,7 +374,7 @@ export function generateRecibo(data: DocumentData): void {
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Recibo ${docNum} - ${company.name}</title>
-  <style>${BASE_STYLES}</style>
+  <style>${activeStyles}</style>
 </head>
 <body>
   <div class="page">
@@ -384,6 +490,11 @@ export function generateNotaServico(data: DocumentData): void {
   const total = formatCurrency(estimate.totalValue);
   const validUntil = (estimate as any).validUntil ? formatDate((estimate as any).validUntil) : '—';
 
+  const paperSize = localStorage.getItem('printSettings_paperSizeOs') || 'A4';
+  const isThermal = paperSize === '80mm' || paperSize === '58mm';
+  const thermalWidth = paperSize === '80mm' ? '300px' : '220px';
+  const activeStyles = isThermal ? THERMAL_STYLES(thermalWidth) : BASE_STYLES;
+
   const whatsappMsg = `*NOTA DE SERVIÇO - ${company.name}*\n\nCliente: ${customer.name}\nNúmero: ${docNum}\nData: ${date}\nTotal: ${total}\nStatus: ${estimate.status}\n\nPara visualizar a nota completa, solicite o arquivo PDF.`;
 
   const itemsRows = items.length > 0
@@ -404,7 +515,7 @@ export function generateNotaServico(data: DocumentData): void {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nota de Serviço ${docNum} - ${company.name}</title>
   <style>
-    ${BASE_STYLES}
+    ${activeStyles}
     .watermark {
       position: fixed;
       top: 50%; left: 50%;
