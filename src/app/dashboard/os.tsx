@@ -64,7 +64,7 @@ export default function OSScreen() {
   const handleSave = async () => {
     console.log('OSScreen: handleSave started');
     if (!formData.customerId || !formData.deviceId) {
-      Alert.alert('Aviso', 'Cliente e Aparelho são obrigatórios');
+      alert('Aviso: Cliente e Aparelho são obrigatórios');
       return;
     }
     setSaveLoading(true);
@@ -87,7 +87,7 @@ export default function OSScreen() {
       setFormData({ id: '', status: 'Aberto', description: '', defect: '', observations: '', totalValue: '0', customerId: '', deviceId: '', deviceModel: '' });
     } catch (error: any) {
       console.error('OSScreen Save Error:', error.message);
-      Alert.alert('Erro', error.message);
+      alert('Erro: ' + error.message);
     } finally {
       setSaveLoading(false);
     }

@@ -86,6 +86,9 @@ model ServiceOrder {
   technician  String?
   status      String   @default("Aberta")
   priority    String   @default("Normal")
+  defect      String?
+  observations String?
+  totalValue  Float    @default(0)
   customerId  String
   customer    Customer @relation(fields: [customerId], references: [id])
   deviceId    String?
