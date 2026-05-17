@@ -89,7 +89,7 @@ export default function FinanceScreen() {
     }
   };
 
-  const normalTransactions = transactions.filter(t => t.category !== 'parcela');
+  const normalTransactions = transactions.filter(t => t.category !== 'parcela' || t.status === 'Recebido');
 
   const filtered = normalTransactions.filter(t => 
     (t.desc || '').toLowerCase().includes(search.toLowerCase()) ||
