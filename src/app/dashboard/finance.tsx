@@ -96,7 +96,10 @@ export default function FinanceScreen() {
     (t.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalIncome = normalTransactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + (t.value || 0), 0);
+  const totalIncome = transactions.filter(t => 
+    t.type === 'receita' && (t.category !== 'parcela' || t.status === 'Recebido')
+  ).reduce((acc, t) => acc + (t.value || 0), 0);
+  
   const totalExpense = normalTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + (t.value || 0), 0);
 
   return (
