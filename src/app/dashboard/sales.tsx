@@ -171,10 +171,10 @@ export default function SalesScreen() {
   };
 
   const filtered = sales.filter((s) =>
-    s.description?.toLowerCase().includes(search.toLowerCase())
+    s.desc?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalVendas = sales.reduce((acc, s) => acc + (s.amount || 0), 0);
+  const totalVendas = sales.reduce((acc, s) => acc + (s.value || 0), 0);
   const totalConcluidas = sales.filter((s) => s.status === 'Recebido').length;
 
   return (
@@ -246,12 +246,12 @@ export default function SalesScreen() {
                 <View key={item.id} style={styles.mobileCard}>
                   <View style={styles.mobileCardHeader}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.itemName} numberOfLines={2}>{item.description}</Text>
+                      <Text style={styles.itemName} numberOfLines={2}>{item.desc}</Text>
                       <Text style={styles.itemSub}>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</Text>
                     </View>
                   </View>
                   <View style={styles.mobileCardBody}>
-                    <Text style={[styles.priceText, { color: '#10B981' }]}>{formatCurrency(item.amount)}</Text>
+                    <Text style={[styles.priceText, { color: '#10B981' }]}>{formatCurrency(item.value || 0)}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: item.status === 'Recebido' ? '#D4EDDA' : '#FFF3CD' }]}>
                       <Text style={[styles.statusText, { color: item.status === 'Recebido' ? '#155724' : '#856404' }]}>
                         {item.status === 'Recebido' ? 'Concluída' : 'Pendente'}
@@ -262,7 +262,7 @@ export default function SalesScreen() {
               ) : (
                 <View key={item.id} style={styles.tableRow}>
                   <View style={{ flex: 3 }}>
-                    <Text style={styles.itemName} numberOfLines={1}>{item.description}</Text>
+                    <Text style={styles.itemName} numberOfLines={1}>{item.desc}</Text>
                     <Text style={styles.itemSub}>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -272,7 +272,7 @@ export default function SalesScreen() {
                       </Text>
                     </View>
                   </View>
-                  <Text style={[styles.priceText, { flex: 1, textAlign: 'right', color: '#10B981' }]}>{formatCurrency(item.amount)}</Text>
+                  <Text style={[styles.priceText, { flex: 1, textAlign: 'right', color: '#10B981' }]}>{formatCurrency(item.value || 0)}</Text>
                 </View>
               )
             ))}
