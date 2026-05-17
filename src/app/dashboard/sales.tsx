@@ -55,7 +55,11 @@ export default function SalesScreen() {
     status: 'Concluída',
     notes: '',
     paymentMethod: 'Dinheiro',
+    installments: '1',
   });
+
+  // Métodos que suportam parcelamento
+  const showInstallments = ['Cartão de Crédito', 'Crédito ao Cliente'].includes(formData.paymentMethod);
 
   const fetchData = async () => {
     try {
@@ -99,7 +103,7 @@ export default function SalesScreen() {
 
   const openModal = () => {
     setCartItems([]);
-    setFormData({ customerId: '', status: 'Concluída', notes: '', paymentMethod: 'Dinheiro' });
+    setFormData({ customerId: '', status: 'Concluída', notes: '', paymentMethod: 'Dinheiro', installments: '1' });
     setModalVisible(true);
   };
 
@@ -111,7 +115,10 @@ export default function SalesScreen() {
     setSaveLoading(true);
     try {
       const customer = customers.find((c) => c.id === formData.customerId);
-      const description = `Venda${customer ? ` - ${customer.name}` : ''} (${cartItems.map(i => i.name).join(', ')})`;
+      const installmentLabel = showInstallments && parseInt(formData.installments) > 1
+        ? ` ${formData.installments}x de ${formatCurrency(cartTotal / parseInt(formData.installments))}`
+        : '';
+      const description = `Venda${customer ? ` - ${customer.name}` : ''} (${cartItems.map(i => i.name).join(', ')}) - ${formData.paymentMethod}${installmentLabel}`;
 
       await api.create('finance', {
         description,
@@ -283,10 +290,42 @@ export default function SalesScreen() {
                     <option value="Cartão de Débito">Cartão de Débito</option>
                     <option value="PIX">PIX</option>
                     <option value="Transferência">Transferência</option>
-                    <option value="Fiado">Fiado</option>
+                    <option value="Crédito ao Cliente">Crédito ao Cliente</option>
                   </select>
                 </View>
               </View>
+
+              {/* Parcelas — aparece só para Cartão de Crédito e Crédito ao Cliente */}
+              {showInstallments && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Número de Parcelas</Text>
+                  <View style={styles.installmentsGrid}>
+                    {['1','2','3','4','5','6','7','8','9','10','11','12'].map((n) => (
+                      <TouchableOpacity
+                        key={n}
+                        style={[
+                          styles.installmentBtn,
+                          formData.installments === n && styles.installmentBtnActive
+                        ]}
+                        onPress={() => setFormData({ ...formData, installments: n })}
+                      >
+                        <Text style={[
+                          styles.installmentBtnText,
+                          formData.installments === n && styles.installmentBtnTextActive
+                        ]}>{n}x</Text>
+                        {cartTotal > 0 && (
+                          <Text style={[
+                            styles.installmentBtnValue,
+                            formData.installments === n && styles.installmentBtnTextActive
+                          ]}>
+                            {formatCurrency(cartTotal / parseInt(n))}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               {/* Status */}
               <View style={styles.inputGroup}>
@@ -298,7 +337,7 @@ export default function SalesScreen() {
                     onChange={(e: any) => setFormData({ ...formData, status: e.target.value })}
                   >
                     <option value="Concluída">Concluída (Pago)</option>
-                    <option value="Pendente">Pendente (Fiado)</option>
+                    <option value="Pendente">Aguardando Pagamento</option>
                   </select>
                 </View>
               </View>
@@ -432,6 +471,12 @@ const styles = StyleSheet.create({
   input: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm, paddingHorizontal: Theme.spacing.md, fontSize: 16, color: Theme.colors.textPrimary, ...Platform.select({ web: { outlineStyle: 'none' } }) },
   selectWrapper: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm },
   htmlSelect: { width: '100%', height: '100%', border: 'none', background: 'transparent', padding: '0 10px', fontSize: 16, outline: 'none' },
+  installmentsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  installmentBtn: { minWidth: 68, paddingVertical: 8, paddingHorizontal: 6, borderRadius: Theme.borderRadius.sm, borderWidth: 1.5, borderColor: Theme.colors.border, backgroundColor: Theme.colors.inputBackground, alignItems: 'center' },
+  installmentBtnActive: { borderColor: Theme.colors.accent, backgroundColor: Theme.colors.accent + '18' },
+  installmentBtnText: { fontSize: 14, fontWeight: 'bold', color: Theme.colors.textPrimary },
+  installmentBtnTextActive: { color: Theme.colors.accent },
+  installmentBtnValue: { fontSize: 10, color: Theme.colors.textSecondary, marginTop: 2 },
   productList: { gap: 8 },
   productItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.inputBackground, borderRadius: Theme.borderRadius.sm, padding: Theme.spacing.sm, borderWidth: 1, borderColor: Theme.colors.border },
   productName: { fontSize: 14, fontWeight: '600', color: Theme.colors.textPrimary },
