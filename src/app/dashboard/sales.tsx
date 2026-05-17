@@ -109,7 +109,7 @@ export default function SalesScreen() {
 
   const handleSave = async () => {
     if (cartItems.length === 0) {
-      Alert.alert('Aviso', 'Adicione ao menos um produto na venda.');
+      alert('Adicione ao menos um produto na venda.');
       return;
     }
     setSaveLoading(true);
@@ -118,20 +118,21 @@ export default function SalesScreen() {
       const installmentLabel = showInstallments && parseInt(formData.installments) > 1
         ? ` ${formData.installments}x de ${formatCurrency(cartTotal / parseInt(formData.installments))}`
         : '';
-      const description = `Venda${customer ? ` - ${customer.name}` : ''} (${cartItems.map(i => i.name).join(', ')}) - ${formData.paymentMethod}${installmentLabel}`;
+      const desc = `Venda${customer ? ` - ${customer.name}` : ''} (${cartItems.map(i => i.name).join(', ')}) - ${formData.paymentMethod}${installmentLabel}`;
 
       await api.create('finance', {
-        description,
+        desc,
         type: 'receita',
-        amount: cartTotal,
+        value: cartTotal,
         category: 'venda',
         status: formData.status === 'Concluída' ? 'Recebido' : 'Pendente',
+        notes: formData.notes || null,
       });
 
       setModalVisible(false);
       fetchData();
     } catch (e: any) {
-      Alert.alert('Erro', e.message);
+      alert('Erro ao registrar venda: ' + (e.message || 'Verifique a conexão com o servidor.'));
     } finally {
       setSaveLoading(false);
     }

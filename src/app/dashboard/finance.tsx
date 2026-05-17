@@ -55,20 +55,22 @@ export default function FinanceScreen() {
     setSaveLoading(true);
     try {
       const payload = {
-        ...formData,
-        amount: parseFloat(formData.amount) || 0
+        desc: formData.description,
+        type: formData.type,
+        value: parseFloat(formData.amount) || 0,
+        category: formData.category,
+        status: formData.status
       };
       if (formData.id) {
         await api.update('finance', formData.id, payload);
       } else {
-        const { id, ...data } = payload;
-        await api.create('finance', data);
+        await api.create('finance', payload);
       }
       setModalVisible(false);
       fetchData();
       setFormData({ id: '', description: '', type: 'receita', amount: '0', category: '', status: 'Pendente' });
     } catch (error: any) {
-      alert(error.message);
+      alert('Erro: ' + (error.message || 'Verifique a conexão com o servidor.'));
     } finally {
       setSaveLoading(false);
     }
@@ -86,12 +88,12 @@ export default function FinanceScreen() {
   };
 
   const filtered = transactions.filter(t => 
-    t.description.toLowerCase().includes(search.toLowerCase()) ||
-    t.category.toLowerCase().includes(search.toLowerCase())
+    (t.desc || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalIncome = transactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0);
+  const totalIncome = transactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + (t.value || 0), 0);
+  const totalExpense = transactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + (t.value || 0), 0);
 
   return (
     <View style={styles.container}>
@@ -154,7 +156,7 @@ export default function FinanceScreen() {
                 <View key={item.id} style={styles.mobileCard}>
                   <View style={styles.mobileCardHeader}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.itemName}>{item.description}</Text>
+                      <Text style={styles.itemName}>{item.desc}</Text>
                       <Text style={styles.itemSub}>{item.category}</Text>
                     </View>
                     <View style={styles.mobileActions}>
@@ -163,7 +165,7 @@ export default function FinanceScreen() {
                   </View>
                   <View style={styles.mobileCardBody}>
                     <Text style={[styles.priceText, { color: item.type === 'receita' ? '#10B981' : '#EF4444' }]}>
-                      {item.type === 'receita' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                      {item.type === 'receita' ? '+' : '-'} R$ {(item.value || 0).toFixed(2)}
                     </Text>
                     <View style={[styles.statusBadge, { backgroundColor: item.status === 'Recebido' || item.status === 'Pago' ? '#D4EDDA' : '#FFF3CD' }]}>
                       <Text style={[styles.statusText, { color: item.status === 'Recebido' || item.status === 'Pago' ? '#155724' : '#856404' }]}>{item.status}</Text>
@@ -173,7 +175,7 @@ export default function FinanceScreen() {
               ) : (
                 <View key={item.id} style={styles.tableRow}>
                   <View style={{ flex: 2 }}>
-                    <Text style={styles.itemName}>{item.description}</Text>
+                    <Text style={styles.itemName}>{item.desc}</Text>
                     <Text style={styles.itemSub}>{item.category}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -182,7 +184,7 @@ export default function FinanceScreen() {
                     </View>
                   </View>
                   <Text style={[styles.priceText, { flex: 1, color: item.type === 'receita' ? '#10B981' : '#EF4444' }]}>
-                    {item.type === 'receita' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                    {item.type === 'receita' ? '+' : '-'} R$ {(item.value || 0).toFixed(2)}
                   </Text>
                   <View style={{ width: 80, flexDirection: 'row', justifyContent: 'center' }}>
                     <TouchableOpacity onPress={() => handleDelete(item.id)}><Trash2 size={18} color="#DC3545" /></TouchableOpacity>
