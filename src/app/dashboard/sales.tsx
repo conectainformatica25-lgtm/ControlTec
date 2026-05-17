@@ -91,7 +91,7 @@ export default function SalesScreen() {
           i.productId === product.id ? { ...i, qty: i.qty + 1 } : i
         );
       }
-      return [...prev, { productId: product.id, name: product.name, price: product.price || 0, qty: 1 }];
+      return [...prev, { productId: product.id, name: product.name, price: product.sellPrice || product.price || 0, qty: 1 }];
     });
   };
 
@@ -115,19 +115,51 @@ export default function SalesScreen() {
     setSaveLoading(true);
     try {
       const customer = customers.find((c) => c.id === formData.customerId);
-      const installmentLabel = showInstallments && parseInt(formData.installments) > 1
-        ? ` ${formData.installments}x de ${formatCurrency(cartTotal / parseInt(formData.installments))}`
-        : '';
-      const desc = `Venda${customer ? ` - ${customer.name}` : ''} (${cartItems.map(i => i.name).join(', ')}) - ${formData.paymentMethod}${installmentLabel}`;
+      const clientName = customer ? customer.name : 'Consumidor Final';
+      const productNames = cartItems.map(i => i.name).join(', ');
+      const numInstallments = showInstallments ? parseInt(formData.installments) : 1;
+      const installmentValue = cartTotal / numInstallments;
+      const saleId = Date.now().toString();
 
-      await api.create('finance', {
-        desc,
-        type: 'receita',
-        value: cartTotal,
-        category: 'venda',
-        status: formData.status === 'Concluída' ? 'Recebido' : 'Pendente',
-        notes: formData.notes || null,
-      });
+      if (formData.paymentMethod === 'Crédito ao Cliente' && numInstallments > 1) {
+        // Criar uma parcela para cada mês
+        const today = new Date();
+        for (let i = 1; i <= numInstallments; i++) {
+          const dueDate = new Date(today);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          await api.create('finance', {
+            desc: `Parcela ${i}/${numInstallments} - ${productNames} - ${clientName}`,
+            type: 'receita',
+            value: installmentValue,
+            category: 'parcela',
+            client: clientName,
+            status: 'Pendente',
+            notes: JSON.stringify({
+              saleId,
+              installmentNumber: i,
+              totalInstallments: numInstallments,
+              dueDate: dueDate.toISOString(),
+              paymentMethod: formData.paymentMethod,
+              products: productNames,
+              totalValue: cartTotal,
+            }),
+          });
+        }
+      } else {
+        // Venda à vista normal
+        const installmentLabel = showInstallments && numInstallments > 1
+          ? ` ${numInstallments}x de ${formatCurrency(installmentValue)}`
+          : '';
+        await api.create('finance', {
+          desc: `Venda${customer ? ` - ${clientName}` : ''} (${productNames}) - ${formData.paymentMethod}${installmentLabel}`,
+          type: 'receita',
+          value: cartTotal,
+          category: 'venda',
+          client: clientName,
+          status: formData.status === 'Concluída' ? 'Recebido' : 'Pendente',
+          notes: formData.notes || null,
+        });
+      }
 
       setModalVisible(false);
       fetchData();
