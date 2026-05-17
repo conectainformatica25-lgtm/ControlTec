@@ -28,7 +28,7 @@ services:
     name: controltec-frontend
     runtime: static
     rootDir: .
-    buildCommand: npm install && npx expo export --platform web
+    buildCommand: npm install && npm run build:web
     staticPublishPath: dist
     headers:
       - path: /*
