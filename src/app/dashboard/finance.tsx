@@ -13,13 +13,15 @@ import {
   Alert
 } from 'react-native';
 import { Theme } from '../../ui/themes';
-import { Search, Plus, TrendingUp, TrendingDown, X, Edit2, Trash2 } from 'lucide-react-native';
+import { Search, Plus, TrendingUp, TrendingDown, X, Edit2, Trash2, CreditCard, List } from 'lucide-react-native';
 import { api } from '../../services/api';
 import { useBreakpoints } from '../../ui/useBreakpoints';
+import CreditScreen from './credit';
 
 export default function FinanceScreen() {
   const { isCompact, useTableLayout } = useBreakpoints();
   
+  const [activeTab, setActiveTab] = useState<'lancamentos' | 'credito'>('lancamentos');
   const [search, setSearch] = useState('');
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,29 +89,47 @@ export default function FinanceScreen() {
     }
   };
 
-  const filtered = transactions.filter(t => 
+  const normalTransactions = transactions.filter(t => t.category !== 'parcela');
+
+  const filtered = normalTransactions.filter(t => 
     (t.desc || '').toLowerCase().includes(search.toLowerCase()) ||
     (t.category || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalIncome = transactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + (t.value || 0), 0);
-  const totalExpense = transactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + (t.value || 0), 0);
+  const totalIncome = normalTransactions.filter(t => t.type === 'receita').reduce((acc, t) => acc + (t.value || 0), 0);
+  const totalExpense = normalTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + (t.value || 0), 0);
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, isCompact ? styles.headerCompact : undefined]}>
         <Text style={[styles.pageTitle, isCompact ? styles.pageTitleBlock : undefined]}>Financeiro</Text>
-        <TouchableOpacity 
-          style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} 
-          onPress={() => {
-            setFormData({ id: '', description: '', type: 'receita', amount: '0', category: '', status: 'Pendente' });
-            setModalVisible(true);
-          }}
-        >
-          <Plus color={Theme.colors.textInverse} size={20} />
-          <Text style={styles.addButtonText}>Novo Lançamento</Text>
+        {activeTab === 'lancamentos' && (
+          <TouchableOpacity 
+            style={[styles.addButton, isCompact ? styles.addButtonBlock : undefined]} 
+            onPress={() => {
+              setFormData({ id: '', description: '', type: 'receita', amount: '0', category: '', status: 'Pendente' });
+              setModalVisible(true);
+            }}
+          >
+            <Plus color={Theme.colors.textInverse} size={20} />
+            <Text style={styles.addButtonText}>Novo Lançamento</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={[styles.tab, activeTab === 'lancamentos' && styles.tabActive]} onPress={() => setActiveTab('lancamentos')}>
+          <List size={16} color={activeTab === 'lancamentos' ? Theme.colors.accent : Theme.colors.textSecondary} />
+          <Text style={[styles.tabText, activeTab === 'lancamentos' && styles.tabTextActive]}>Lançamentos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.tab, activeTab === 'credito' && styles.tabActive]} onPress={() => setActiveTab('credito')}>
+          <CreditCard size={16} color={activeTab === 'credito' ? Theme.colors.accent : Theme.colors.textSecondary} />
+          <Text style={[styles.tabText, activeTab === 'credito' && styles.tabTextActive]}>Crédito ao Cliente</Text>
         </TouchableOpacity>
       </View>
+
+      {activeTab === 'lancamentos' ? (
+        <>
 
       <View style={[styles.summaryCards, isCompact ? styles.summaryCardsMobile : undefined]}>
         <View style={[styles.summaryCard, { borderLeftColor: '#10B981' }]}>
@@ -195,6 +215,10 @@ export default function FinanceScreen() {
           </ScrollView>
         )}
       </View>
+      </>
+      ) : (
+        <CreditScreen />
+      )}
 
       {/* Modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -251,6 +275,11 @@ const styles = StyleSheet.create({
   addButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.colors.accent, paddingHorizontal: Theme.spacing.md, paddingVertical: Theme.spacing.sm, borderRadius: Theme.borderRadius.sm },
   addButtonBlock: { alignSelf: 'stretch', justifyContent: 'center' },
   addButtonText: { color: Theme.colors.textInverse, fontWeight: 'bold', marginLeft: Theme.spacing.xs },
+  tabBar: { flexDirection: 'row', backgroundColor: Theme.colors.surface, borderRadius: 10, padding: 4, marginBottom: 16, gap: 4 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 8, gap: 6 },
+  tabActive: { backgroundColor: Theme.colors.inputBackground },
+  tabText: { fontSize: 13, fontWeight: '600', color: Theme.colors.textSecondary },
+  tabTextActive: { color: Theme.colors.accent },
   summaryCards: { flexDirection: 'row', flexWrap: 'wrap', gap: Theme.spacing.md, marginBottom: Theme.spacing.lg },
   summaryCardsMobile: { flexDirection: 'column' },
   summaryCard: { flexGrow: 1, flexBasis: 0, minWidth: 160, backgroundColor: Theme.colors.surface, padding: Theme.spacing.md, borderRadius: Theme.borderRadius.md, borderLeftWidth: 5 },
