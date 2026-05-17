@@ -11,7 +11,8 @@ import {
   CircleDollarSign, 
   CalendarClock,
   Settings,
-  LogOut 
+  LogOut,
+  ShoppingCart
 } from 'lucide-react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { api } from '../../services/api';
@@ -29,6 +30,7 @@ const MENU_ITEMS = [
   { id: 'equipment', title: 'Aparelhos', icon: MonitorSmartphone, route: '/dashboard/equipment' },
   { id: 'os', title: 'Ordens (OS)', icon: ClipboardList, route: '/dashboard/os' },
   { id: 'estimates', title: 'Orçamentos', icon: FileText, route: '/dashboard/estimates' },
+  { id: 'sales', title: 'Vendas', icon: ShoppingCart, route: '/dashboard/sales' },
   { id: 'inventory', title: 'Estoque', icon: Package, route: '/dashboard/inventory' },
   { id: 'finance', title: 'Financeiro', icon: CircleDollarSign, route: '/dashboard/finance' },
   { id: 'schedule', title: 'Agendamentos', icon: CalendarClock, route: '/dashboard/schedule' },
