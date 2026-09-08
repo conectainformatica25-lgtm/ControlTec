@@ -731,6 +731,84 @@ export default function EquipmentScreen() {
                 const badge = getStatusBadgeStyle(item.activeOrder?.status);
                 const osIdShort = item.activeOrder ? item.activeOrder.id.slice(0, 6).toUpperCase() : null;
 
+                if (isCompact) {
+                  return (
+                    <View key={item.id} style={styles.mobileCard}>
+                      <View style={styles.mobileCardHeader}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.clientName}>{item.customer?.name || 'Cliente Avulso'}</Text>
+                          {item.customer?.phone ? (
+                            <Text style={styles.clientSub}>{item.customer.phone}</Text>
+                          ) : null}
+                        </View>
+                        <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+                      </View>
+
+                      <View style={{ marginVertical: 6 }}>
+                        <Text style={styles.deviceModel}>
+                          {item.model} <Text style={styles.deviceType}>({item.type}{item.brand ? ` • ${item.brand}` : ''})</Text>
+                        </Text>
+                        {item.serialNumber ? (
+                          <Text style={styles.serialText}>S/N: {item.serialNumber}</Text>
+                        ) : null}
+                      </View>
+
+                      <View style={{ marginVertical: 6 }}>
+                        {item.activeOrder ? (
+                          <TouchableOpacity 
+                            style={[styles.statusBadge, { backgroundColor: badge.bg }]}
+                            onPress={() => handleOsEdit(item.activeOrder)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={[styles.statusDot, { backgroundColor: badge.dot }]} />
+                            <Text style={[styles.statusBadgeText, { color: badge.text }]} numberOfLines={1}>
+                              #OS-{osIdShort} • {badge.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity 
+                            style={styles.openOsQuickBtn}
+                            onPress={() => openNewOsForDevice(item)}
+                            activeOpacity={0.7}
+                          >
+                            <Plus size={12} color="#4F46E5" />
+                            <Text style={styles.openOsQuickText}>Abrir OS</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+
+                      <View style={styles.mobileActionsRow}>
+                        <TouchableOpacity style={styles.mobileActionBtn} onPress={() => handlePrintLabel(item)}>
+                          <Tag size={15} color="#2563EB" />
+                          <Text style={[styles.mobileActionBtnText, { color: '#2563EB' }]}>Etiqueta</Text>
+                        </TouchableOpacity>
+
+                        {item.activeOrder ? (
+                          <TouchableOpacity style={[styles.mobileActionBtn, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]} onPress={() => handleOsEdit(item.activeOrder)}>
+                            <FileText size={15} color="#4F46E5" />
+                            <Text style={[styles.mobileActionBtnText, { color: '#4F46E5' }]}>Ver OS</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity style={[styles.mobileActionBtn, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]} onPress={() => openNewOsForDevice(item)}>
+                            <Plus size={15} color="#16A34A" />
+                            <Text style={[styles.mobileActionBtnText, { color: '#16A34A' }]}>Nova OS</Text>
+                          </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity style={styles.mobileActionBtn} onPress={() => handleEdit(item)}>
+                          <Edit2 size={15} color="#475569" />
+                          <Text style={[styles.mobileActionBtnText, { color: '#475569' }]}>Editar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={[styles.mobileActionBtn, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]} onPress={() => handleDelete(item.id)}>
+                          <Trash2 size={15} color="#DC2626" />
+                          <Text style={[styles.mobileActionBtnText, { color: '#DC2626' }]}>Excluir</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                }
+
                 return (
                   <View key={item.id} style={styles.tableRow}>
                     {/* Cliente */}
@@ -1063,13 +1141,13 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flexGrow: 1,
-    flexBasis: 200,
+    flexBasis: 140,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderLeftWidth: 4,
-    padding: 16,
+    padding: 12,
     ...Platform.select({
       web: {
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
@@ -1552,5 +1630,43 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#64748B',
     marginTop: 2,
+  },
+  mobileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  mobileCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  mobileActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  mobileActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+  mobileActionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

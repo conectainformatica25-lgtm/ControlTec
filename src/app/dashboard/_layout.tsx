@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme, getSidebarMode } from '../../ui/themes';
 import TopBar from '../../ui/components/TopBar';
 import MobileSidebar from '../../ui/components/MobileSidebar';
+import { MobileTopHeader, MobileBottomNav, MobileDrawer } from '../../ui/components/MobileNav';
 import { useBreakpoints } from '../../ui/useBreakpoints';
 
 export default function DashboardLayout() {
@@ -12,6 +13,7 @@ export default function DashboardLayout() {
   const { isCompact } = useBreakpoints();
   const [sidebarMode, setMode] = useState<'icons_hover' | 'expanded' | 'topbar'>('icons_hover');
   const [bgColor, setBgColor] = useState(Theme.colors.primary);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     setMode(getSidebarMode());
@@ -34,14 +36,20 @@ export default function DashboardLayout() {
     }
   }, []);
 
-  // Se o usuário estiver no mobile, usa sempre a sidebar lateral
+  // Se o usuário estiver no mobile, usa TopHeader + Conteúdo Full Width 100% + BottomNav + Drawer
   if (isCompact) {
     return (
-      <View style={[styles.mobileContainer, { backgroundColor: bgColor }]}>
-        <MobileSidebar />
-        <View style={[styles.mobileContent, { paddingBottom: Math.max(insets.bottom, Theme.spacing.sm) }]}>
+      <View style={[styles.mobileWrapper, { backgroundColor: '#F8FAFC' }]}>
+        <MobileTopHeader primaryColor={bgColor} onOpenDrawer={() => setMobileDrawerOpen(true)} />
+        <View style={styles.mobileMainContent}>
           <Slot />
         </View>
+        <MobileBottomNav primaryColor={bgColor} onOpenDrawer={() => setMobileDrawerOpen(true)} />
+        <MobileDrawer 
+          visible={mobileDrawerOpen} 
+          onClose={() => setMobileDrawerOpen(false)} 
+          primaryColor={bgColor} 
+        />
       </View>
     );
   }
@@ -60,9 +68,9 @@ export default function DashboardLayout() {
 
   // Desktop com Sidebar Lateral (Apenas Ícones no Hover ou Expandida)
   return (
-    <View style={[styles.mobileContainer, { backgroundColor: bgColor }]}>
+    <View style={[styles.desktopContainer, { backgroundColor: bgColor }]}>
       <MobileSidebar />
-      <View style={[styles.mobileContent, { paddingBottom: Math.max(insets.bottom, Theme.spacing.sm) }]}>
+      <View style={[styles.content, { paddingBottom: Math.max(insets.bottom, Theme.spacing.sm) }]}>
         <Slot />
       </View>
     </View>
@@ -73,20 +81,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  desktopContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
   content: {
     flex: 1,
     minHeight: 0,
     minWidth: 0,
     backgroundColor: '#F8FAFC',
   },
-  mobileContainer: {
+  mobileWrapper: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
   },
-  mobileContent: {
+  mobileMainContent: {
     flex: 1,
     minHeight: 0,
     minWidth: 0,
+    width: '100%',
     backgroundColor: '#F8FAFC',
   },
 });
