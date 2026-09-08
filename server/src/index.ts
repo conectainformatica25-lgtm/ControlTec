@@ -10,6 +10,9 @@ import { inventoryRoutes } from './routes/inventory.routes';
 import { financeRoutes } from './routes/finance.routes';
 import { scheduleRoutes } from './routes/schedule.routes';
 import { userRoutes } from './routes/users.routes';
+import { adminRoutes } from './routes/admin.routes';
+import { visitsRoutes } from './routes/visits.routes';
+import { fixedVisitsRoutes } from './routes/fixedVisits.routes';
 
 dotenv.config();
 
@@ -17,7 +20,8 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Rotas
 app.use('/api/auth', authRoutes);
@@ -29,6 +33,9 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/visits', visitsRoutes);
+app.use('/api/fixed-visits', fixedVisitsRoutes);
 
 // Health check e Rota Inicial
 app.get('/', (_req, res) => {

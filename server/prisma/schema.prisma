@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,8 +15,10 @@ model Company {
   phone     String?
   email     String?
   address   String?
+  logo      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  blocked   Boolean  @default(false)
 
   users      User[]
   customers  Customer[]
@@ -26,6 +28,8 @@ model Company {
   inventory  InventoryItem[]
   finances   Transaction[]
   schedules  Schedule[]
+  visits     Visit[]
+  fixedVisits FixedVisit[]
 }
 
 model User {
@@ -71,8 +75,10 @@ model Device {
   customer   Customer @relation(fields: [customerId], references: [id])
   companyId  String
   company    Company  @relation(fields: [companyId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  checklist    String?
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   orders    ServiceOrder[]
   estimates Estimate[]
@@ -168,3 +174,29 @@ model Schedule {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model Visit {
+  id          String   @id @default(uuid())
+  clientName  String
+  address     String?
+  time        String?
+  serviceDone String?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FixedVisit {
+  id         String   @id @default(uuid())
+  clientName String
+  address    String?
+  dayOfWeek  String
+  time       String?
+  notes      String?
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
