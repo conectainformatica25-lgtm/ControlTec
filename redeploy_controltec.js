@@ -19,7 +19,7 @@ const ssh = new NodeSSH();
 const VPS = {
   host:     '2.25.109.173',
   username: 'root',
-  password: 'Guedesthawan2195@',
+  password: 'Conecta211895@',
 };
 
 // ── Config ─────────────────────────────────────────────────────────────────
