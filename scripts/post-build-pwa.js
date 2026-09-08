@@ -55,7 +55,7 @@ const pwaTags = `
   <link rel="apple-touch-icon" href="/pwa-icon-512.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/pwa-icon-192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="/pwa-icon-512.png" />
-  <script>(function(){var V='3';var s=localStorage.getItem('ct-sw-v');if(s!==V){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister();});})}if('caches' in window){caches.keys().then(function(k){k.forEach(function(c){caches.delete(c);});})}localStorage.setItem('ct-sw-v',V);if(s!==null){setTimeout(function(){window.location.reload(true);},200);}}})()</script>
+  <script>(function(){var V='4';var s=localStorage.getItem('ct-sw-v');if(s!==V){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister();});})}if('caches' in window){caches.keys().then(function(k){k.forEach(function(c){caches.delete(c);});})}localStorage.setItem('ct-sw-v',V);if(s!==null){setTimeout(function(){window.location.reload(true);},200);}}})()</script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
