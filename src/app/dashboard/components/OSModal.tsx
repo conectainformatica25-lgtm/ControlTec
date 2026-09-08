@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   textArea: { height: 80, paddingTop: 10 },
   selectWrapper: { height: 48, backgroundColor: Theme.colors.inputBackground, borderWidth: 1, borderColor: Theme.colors.border, borderRadius: Theme.borderRadius.sm },
   htmlSelect: { width: '100%', height: '100%', border: 'none', background: 'transparent', padding: '0 10px', fontSize: 16, outline: 'none' } as any,
-  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', padding: Theme.spacing.lg, borderTopWidth: 1, borderTopColor: Theme.colors.border, gap: Theme.spacing.md },
+  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', padding: Theme.spacing.lg, borderTopWidth: 1, borderTopColor: Theme.colors.border, gap: Theme.spacing.md },
   finishButton: { backgroundColor: '#10B981', paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.lg, borderRadius: Theme.borderRadius.sm, marginRight: 'auto' },
   finishButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
   cancelButton: { paddingVertical: Theme.spacing.sm, paddingHorizontal: Theme.spacing.lg },

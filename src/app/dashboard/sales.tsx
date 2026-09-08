@@ -252,7 +252,7 @@ export default function SalesScreen() {
           <ActivityIndicator size="large" color={Theme.colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <ScrollView style={styles.listContainer}>
-            {!useTableLayout && (
+            {useTableLayout && (
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 3 }]}>Descrição</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1 }]}>Status</Text>
@@ -267,7 +267,19 @@ export default function SalesScreen() {
                 <Text style={styles.emptySubText}>Clique em "Nova Venda" para começar.</Text>
               </View>
             ) : filtered.map((item) => (
-              !useTableLayout ? (
+              useTableLayout ? (
+                <View key={item.id} style={styles.tableRow}>
+                  <Text style={[styles.itemName, { flex: 3 }]} numberOfLines={1}>{item.desc || 'Venda'}</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status === 'Recebido' ? 'Concluída' : 'Pendente']?.bg || '#eee' }]}>
+                      <Text style={[styles.statusText, { color: STATUS_COLORS[item.status === 'Recebido' ? 'Concluída' : 'Pendente']?.text || '#333' }]}>
+                        {item.status === 'Recebido' ? 'Pago' : item.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.priceText, { flex: 1, textAlign: 'right' }]}>{formatCurrency(item.value || 0)}</Text>
+                </View>
+              ) : (
                 <View key={item.id} style={styles.mobileCard}>
                   <View style={styles.mobileCardHeader}>
                     <View style={{ flex: 1 }}>
@@ -284,18 +296,6 @@ export default function SalesScreen() {
                     <Text style={styles.priceText}>{formatCurrency(item.value || 0)}</Text>
                     <Text style={styles.itemSub}>{item.category}</Text>
                   </View>
-                </View>
-              ) : (
-                <View key={item.id} style={styles.tableRow}>
-                  <Text style={[styles.itemName, { flex: 3 }]} numberOfLines={1}>{item.desc || 'Venda'}</Text>
-                  <View style={{ flex: 1 }}>
-                    <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status === 'Recebido' ? 'Concluída' : 'Pendente']?.bg || '#eee' }]}>
-                      <Text style={[styles.statusText, { color: STATUS_COLORS[item.status === 'Recebido' ? 'Concluída' : 'Pendente']?.text || '#333' }]}>
-                        {item.status === 'Recebido' ? 'Pago' : item.status}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={[styles.priceText, { flex: 1, textAlign: 'right' }]}>{formatCurrency(item.value || 0)}</Text>
                 </View>
               )
             ))}

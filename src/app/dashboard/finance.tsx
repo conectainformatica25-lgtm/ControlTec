@@ -183,24 +183,26 @@ export default function FinanceScreen() {
         )}
       </View>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={[styles.tab, activeTab === 'lancamentos' && styles.tabActive]} onPress={() => setActiveTab('lancamentos')}>
-          <List size={16} color={activeTab === 'lancamentos' ? Theme.colors.accent : Theme.colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'lancamentos' && styles.tabTextActive]}>Lançamentos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'contas_pagar' && styles.tabActive]} onPress={() => setActiveTab('contas_pagar')}>
-          <CircleDollarSign size={16} color={activeTab === 'contas_pagar' ? Theme.colors.accent : Theme.colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'contas_pagar' && styles.tabTextActive]}>Contas a Pagar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'caixa_pessoal' && styles.tabActive]} onPress={() => setActiveTab('caixa_pessoal')}>
-          <Wallet size={16} color={activeTab === 'caixa_pessoal' ? Theme.colors.accent : Theme.colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'caixa_pessoal' && styles.tabTextActive]}>Caixa Pessoal</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'credito' && styles.tabActive]} onPress={() => setActiveTab('credito')}>
-          <CreditCard size={16} color={activeTab === 'credito' ? Theme.colors.accent : Theme.colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === 'credito' && styles.tabTextActive]}>Crédito ao Cliente</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity style={[styles.tab, activeTab === 'lancamentos' && styles.tabActive]} onPress={() => setActiveTab('lancamentos')}>
+            <List size={16} color={activeTab === 'lancamentos' ? Theme.colors.accent : Theme.colors.textSecondary} />
+            <Text style={[styles.tabText, activeTab === 'lancamentos' && styles.tabTextActive]}>Lançamentos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.tab, activeTab === 'contas_pagar' && styles.tabActive]} onPress={() => setActiveTab('contas_pagar')}>
+            <CircleDollarSign size={16} color={activeTab === 'contas_pagar' ? Theme.colors.accent : Theme.colors.textSecondary} />
+            <Text style={[styles.tabText, activeTab === 'contas_pagar' && styles.tabTextActive]}>Contas a Pagar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.tab, activeTab === 'caixa_pessoal' && styles.tabActive]} onPress={() => setActiveTab('caixa_pessoal')}>
+            <Wallet size={16} color={activeTab === 'caixa_pessoal' ? Theme.colors.accent : Theme.colors.textSecondary} />
+            <Text style={[styles.tabText, activeTab === 'caixa_pessoal' && styles.tabTextActive]}>Caixa Pessoal</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.tab, activeTab === 'credito' && styles.tabActive]} onPress={() => setActiveTab('credito')}>
+            <CreditCard size={16} color={activeTab === 'credito' ? Theme.colors.accent : Theme.colors.textSecondary} />
+            <Text style={[styles.tabText, activeTab === 'credito' && styles.tabTextActive]}>Crédito ao Cliente</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       {(activeTab === 'lancamentos' || activeTab === 'contas_pagar') ? (
         <>

@@ -1618,6 +1618,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
     marginBottom: 16,
   },
   weekNavGroup: {
@@ -1938,6 +1940,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '90%',
     maxWidth: 480,
+    maxHeight: '92%',
   },
   modalHeader: {
     flexDirection: 'row',

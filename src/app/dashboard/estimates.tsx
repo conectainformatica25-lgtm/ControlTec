@@ -366,7 +366,7 @@ export default function EstimatesScreen() {
             )}
 
             {filtered.map((item) => (
-              !useTableLayout ? (
+              useTableLayout ? (
                 // Desktop table row
                 <View key={item.id} style={styles.tableRow}>
                   <View style={{ flex: 2 }}>
