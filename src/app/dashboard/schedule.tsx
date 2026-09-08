@@ -561,9 +561,9 @@ export default function ScheduleScreen() {
                           const isSameDay = fvDay.toLowerCase().startsWith(dayOfWeekName.substring(0, 3).toLowerCase());
                           if (!isSameDay) return false;
 
-                          // Não exibe se já há agendamento normal (não Concluído) para este cliente hoje
+                          // Não exibe se já há agendamento para este cliente hoje
                           const alreadyScheduled = daySchedulesAll.some(
-                            s => s.clientName?.toLowerCase() === fv.clientName?.toLowerCase() && s.status !== 'Concluído'
+                            s => s.clientName?.toLowerCase() === fv.clientName?.toLowerCase()
                           );
                           if (alreadyScheduled) return false;
 
@@ -722,9 +722,9 @@ export default function ScheduleScreen() {
             const dateKey = formatDateKey(dayDate);
             const dayOfWeekName = DAYS_MATCH_MAP[dayDate.getDay()];
             const daySchedules = filteredSchedules.filter(s => s.date && s.date.split('T')[0] === dateKey);
-            // Não exibe visita fixa se já há agendamento normal (não Concluído) para o mesmo cliente neste dia
+            // Não exibe visita fixa se já há agendamento para o mesmo cliente neste dia
             const dayScheduledNames = new Set(
-              daySchedules.filter(s => s.status !== 'Concluído').map((s: any) => s.clientName?.toLowerCase())
+              daySchedules.map((s: any) => s.clientName?.toLowerCase())
             );
             const dayCompletedNames = new Set(
               daySchedules.filter(s => s.status === 'Concluído').map((s: any) => s.clientName?.toLowerCase())
@@ -1025,9 +1025,25 @@ export default function ScheduleScreen() {
             </ScrollView>
 
             <View style={styles.modalFooter}>
+              {/* Botão Excluir Agendamento — só aparece ao editar */}
+              {formData.id && (
+                <TouchableOpacity
+                  style={[styles.saveButton, { backgroundColor: '#EF4444', flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 'auto' }]}
+                  onPress={() => {
+                    handleDelete(formData.id);
+                    setModalVisible(false);
+                  }}
+                  disabled={isSaving}
+                >
+                  <Trash2 size={16} color="#FFF" />
+                  <Text style={styles.saveBtnText}>Excluir</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)} disabled={isSaving}>
                 <Text style={styles.cancelBtnText}>Cancelar</Text>
               </TouchableOpacity>
+
               {/* Botão marcar como realizada — só aparece ao editar */}
               {formData.id && formData.status !== 'Concluído' && (
                 <TouchableOpacity
@@ -1229,7 +1245,20 @@ export default function ScheduleScreen() {
                   />
                 </View>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 15, flexWrap: 'wrap' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 15, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {fixedVisitFormData.id && (
+                    <TouchableOpacity
+                      style={[styles.saveButton, { backgroundColor: '#EF4444', flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 'auto' }]}
+                      onPress={() => {
+                        handleDeleteFixedVisit(fixedVisitFormData.id);
+                        setFixedVisitFormVisible(false);
+                      }}
+                    >
+                      <Trash2 size={16} color="#FFF" />
+                      <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 15 }}>Excluir</Text>
+                    </TouchableOpacity>
+                  )}
+
                   <TouchableOpacity style={{ paddingVertical: 10, paddingHorizontal: 20 }} onPress={() => setFixedVisitFormVisible(false)}>
                     <Text style={{ color: Theme.colors.textSecondary, fontWeight: '600', fontSize: 16 }}>Voltar</Text>
                   </TouchableOpacity>
